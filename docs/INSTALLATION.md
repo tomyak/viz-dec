@@ -10,12 +10,12 @@ for model selection, MCP or plugin installation, custom folders, and diagnostics
 Prerequisites: Apple Silicon macOS, at least 8 GiB of unified memory, Git, Python 3, and the CLI for the agent you use. The installer detects physical memory and selects a model, then provisions Python 3.12 with uv if needed.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash
 ```
 
 This one command:
 
-- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.4.1`.
+- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.5.0`.
 - Chooses a model for the Mac's memory, printing the selection before downloading anything.
 - Reuses complete cached Gemma weights or downloads missing weights from Hugging Face. Known models use pinned commit revisions.
 - Registers the plugin with every detected supported agent, including MCP configuration and its skill. **No manual SKILL.md copying.**
@@ -26,7 +26,7 @@ This one command:
 To install the skill for Claude Code **without a marketplace or MCP connection**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents claude --integration skill
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents claude --integration skill
 ```
 
 Use `--agents codex` or `--agents both` for the other agent choices. All modes install the same runtime and download the selected model when absent:
@@ -106,3 +106,19 @@ Local plugin loading still follows your organization's plugin policy.
 ```
 
 The default check validates configuration and local model files, starts/reuses the shared service, then freshly encodes two generated color images and checks their expected answers across choice rotations. It reports stage-specific errors, model metadata, memory counters, timing, and the service PID/log location as JSON. Failures exit with status 1. It never downloads weights; rerun installation to provision missing files. `preflight_ok` with `--no-inference` means inference was skipped. The synthetic smoke test checks basic model operation, not accuracy on your real tasks. Run it after installation or for diagnosis, not before every request. Add `--check-model` to an installation command to run it at the end.
+
+
+## Sandbox lock-file errors
+
+Release 0.5.0 fixes the error about writing `/tmp/visual-decider-UID-HASH/engine.lock` outside the sandbox. Runtime sockets and logs now respect `$TMPDIR`, and model ownership uses a read-only lock on the existing installation directory. The fix does not change agent sandbox permissions.
+
+From a regular terminal on the affected Mac, stop the old idle runtime **before** upgrading, then install the fix:
+
+```bash
+~/.local/share/visual-decider/bin/visual-decider-service stop
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents claude
+```
+
+The installer remembers your existing skill/MCP/plugin choice and reuses cached model files. Use `--agents codex` or `--agents both` as appropriate. Restart the agent and retry your original request. If the old service reports busy, let the job finish before stopping it.
+
+Use the same writable `TMPDIR` for sessions that need to discover one another's shared model. If another temp root or an older session still owns the model, the new session waits up to 30 seconds and reports the conflict instead of loading a second copy. Stop that runtime from its original session, or let it exit after five idle minutes. Unix socket/process restrictions imposed separately by an organization still apply; this change addresses filesystem write restrictions.

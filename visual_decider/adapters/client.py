@@ -1,3 +1,4 @@
+import time
 from urllib.parse import urlparse
 
 import httpx
@@ -20,6 +21,7 @@ class Client:
         self.url = url.rstrip("/")
 
     def call(self, tool, **payload):
+        started = time.perf_counter()
         with httpx.Client(timeout=3600, trust_env=False, follow_redirects=False) as client:
             try:
                 r = client.post(f"{self.url}/{tool}", json=payload)
@@ -31,4 +33,6 @@ class Client:
                 ) from e
             if not r.is_success:
                 raise RuntimeError(f"Local engine returned HTTP {r.status_code}: {r.text[:500]}")
-            return r.json()
+            result = r.json()
+        result.setdefault("timing", {})["round_trip_ms"] = 1000 * (time.perf_counter() - started)
+        return result

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 — 2026-09-24
+
+- Return `model_cached` and per-request model-load, execution, queue, and total times for image, video, batch, and model-health decisions. Shared/HTTP clients also report round-trip time; batches report execution time per file.
+- Keep resident-model reuse distinct from image-feature `cache_hit` and on-disk model files. Cold loading is charged once, even when several requests arrive together.
+- Respect the sandbox's `TMPDIR` for runtime sockets/logs. Recover the normal user temp directory on macOS when MCP hosts omit the environment variable; reject overly long socket paths explicitly.
+- Replace writable runtime lock files with an inherited read-only installation-directory lock, preventing duplicate models across different temp roots. Honor existing legacy locks during upgrades. No sandbox allowlist change or login service is installed.
+
 ## 0.4.1 — 2026-09-24
 
 - Fix standalone skill/MCP installation on older Claude Code versions without `plugin list` or `--json` support. Use the documented user `enabledPlugins` setting to retire only the visual-decider plugin; preserve unrelated settings, permissions, and symlinks.

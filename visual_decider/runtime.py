@@ -1,5 +1,6 @@
 """Transport-neutral serialized engine lifecycle; no HTTP/MCP dependencies."""
 
+import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import BoundedSemaphore
 
@@ -20,28 +21,53 @@ class EngineWorker:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="visual-decider")
         self._slots = BoundedSemaphore(max_pending)
 
-    def _call(self, operation, payload):
+    def _call(self, operation, payload, submitted_at):
+        if operation not in {
+            "health",
+            "model_health",
+            "classify_image",
+            "inspect_image",
+            "analyze_video",
+            "analyze_batch",
+        }:
+            raise ValueError("Unknown engine operation")
+        started = time.perf_counter()
+        model_cached = self._engine is not None
         if self._engine is None:
             self._engine = self._factory()
+        loaded = time.perf_counter() if not model_cached else started
         if operation == "health":
+            # Internal startup/liveness metadata is not a measured inference request.
             return self._engine.info()
         if operation == "model_health":
-            return self._engine.model_health()
-        if operation not in {"classify_image", "inspect_image", "analyze_video", "analyze_batch"}:
-            raise ValueError("Unknown engine operation")
-        args = dict(payload)
-        path = args.pop("path", None)
-        policy = args.pop("policy", None)
-        args["policy"] = DecisionPolicy(**(policy or {}))
-        if operation == "analyze_batch":
-            return self._engine.analyze_batch(**args)
-        return getattr(self._engine, operation)(path, **args)
+            result = self._engine.model_health()
+        else:
+            args = dict(payload)
+            path = args.pop("path", None)
+            policy = args.pop("policy", None)
+            args["policy"] = DecisionPolicy(**(policy or {}))
+            result = (
+                self._engine.analyze_batch(**args)
+                if operation == "analyze_batch"
+                else getattr(self._engine, operation)(path, **args)
+            )
+        finished = time.perf_counter()
+        return {
+            **result,
+            "model_cached": model_cached,
+            "timing": {
+                "queue_ms": 1000 * (started - submitted_at),
+                "model_load_ms": 1000 * (loaded - started),
+                "execution_ms": 1000 * (finished - loaded),
+                "total_ms": 1000 * (finished - submitted_at),
+            },
+        }
 
     def submit(self, operation, **payload):
         if not self._slots.acquire(blocking=False):
             raise QueueFullError("Inference queue is full")
         try:
-            future = self._executor.submit(self._call, operation, payload)
+            future = self._executor.submit(self._call, operation, payload, time.perf_counter())
         except BaseException:
             self._slots.release()
             raise

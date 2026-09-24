@@ -37,7 +37,7 @@ p = argparse.ArgumentParser()
 p.add_argument("command")
 p.add_argument("--home", type=Path)
 p.add_argument("--config")
-p.add_argument("--lock-fd", type=int)
+p.add_argument("--lock-fd", type=int, action="append")
 a = p.parse_args()
 class Engine:
     def __init__(self):
@@ -50,7 +50,7 @@ class Engine:
         return {"winner": "Yes", "pid": os.getpid()}
     def model_health(self):
         return {"status": "ok", "pid": os.getpid()}
-serve(a.home, json.loads(a.config), lock_fd=a.lock_fd, factory=Engine, idle_seconds=2)
+serve(a.home, json.loads(a.config), lock_fds=a.lock_fd, factory=Engine, idle_seconds=2)
 """)
     original = subprocess.Popen
 
@@ -82,6 +82,12 @@ def test_simultaneous_start_loads_one_model_and_reuses_it(client):
         results = list(pool.map(lambda _: client.call("classify_image", **PAYLOAD), range(8)))
     pids = {r["pid"] for r in results}
     assert len(pids) == 1
+    assert sum(not r["model_cached"] for r in results) == 1
+    for result in results:
+        timing = result["timing"]
+        assert timing["round_trip_ms"] >= timing["total_ms"]
+        if result["model_cached"]:
+            assert timing["model_load_ms"] == 0
     assert (client.home / "loads").read_text().splitlines() == [str(next(iter(pids)))]
     assert client.call("classify_image", **PAYLOAD)["pid"] in pids
     assert client.status()["loaded"]

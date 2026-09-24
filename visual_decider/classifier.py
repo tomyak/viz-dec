@@ -7,6 +7,7 @@ from .cache import VisualCache
 from .image import load_image
 from .policy import DecisionPolicy
 from .scoring import aggregate, rotations, validate
+from .timing import timed_execution
 
 METHODS = ("label", "label_permute", "label_logmean", "candidate", "candidate_permute")
 
@@ -99,6 +100,7 @@ class Analyzer:
             score_meaning="Normalized model preference; not calibrated probability.",
         )
 
+    @timed_execution
     def classify_image(self, image, question, choices, *, method="label_permute", policy=None):
         question, choices = validate(question, choices)
         if method not in METHODS:
@@ -110,6 +112,7 @@ class Analyzer:
 
     classify = classify_image
 
+    @timed_execution
     def inspect_image(self, image, questions, *, method="label_permute", policy=None):
         if not isinstance(questions, (list, tuple)) or not 1 <= len(questions) <= 32:
             raise ValueError("Expected 1–32 questions")
@@ -135,6 +138,7 @@ class Analyzer:
                 ]
             }
 
+    @timed_execution
     def classify_frame(self, rgb, question, choices, **kwargs):
         question, choices = validate(question, choices)
         method = kwargs.get("method", "label_permute")
@@ -156,11 +160,13 @@ class Analyzer:
                 hit,
             )
 
+    @timed_execution
     def analyze_video(self, path, question, choices, sample_interval=1.0, **kwargs):
         from .video import analyze_video
 
         return analyze_video(self, path, question, choices, sample_interval, **kwargs)
 
+    @timed_execution
     def analyze_batch(self, **kwargs):
         from .batch import analyze_batch
 
@@ -170,6 +176,7 @@ class Analyzer:
         with self.lock:
             return {**self.backend.info(), "cache": self.cache.info(), "local_only": True}
 
+    @timed_execution
     def model_health(self):
         """Exercise fresh vision encoding and scoring without user files or cache hits."""
         from PIL import Image

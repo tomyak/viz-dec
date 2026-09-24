@@ -16,6 +16,7 @@ import socketserver
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from importlib.metadata import version
@@ -37,15 +38,54 @@ CONTRACTS = {
 }
 
 
+def installation_digest(home):
+    return hashlib.sha256(str(Path(home).resolve()).encode()).hexdigest()[:20]
+
+
 def runtime_directory(home):
-    # macOS Unix socket paths are limited to 104 bytes; installation paths may be long.
-    digest = hashlib.sha256(str(Path(home).resolve()).encode()).hexdigest()[:20]
-    path = Path("/tmp") / f"visual-decider-{os.getuid()}-{digest}"
+    base = os.getenv("TMPDIR")
+    if not base and sys.platform == "darwin":
+        # Some MCP hosts filter TMPDIR. Recover the user's normal macOS temp root
+        # so those clients still find the same daemon as terminal/skill clients.
+        base = subprocess.check_output(
+            ["/usr/bin/getconf", "DARWIN_USER_TEMP_DIR"], text=True, timeout=5
+        ).strip()
+    root = Path(base or tempfile.gettempdir())
+    if not root.is_absolute():
+        raise ValueError("TMPDIR must be an absolute, writable directory")
+    # Keep the supplied spelling: resolving /var to /private/var wastes socket bytes.
+    path = root / f"vd-{os.getuid()}-{installation_digest(home)}"
+    if len(os.fsencode(path / "engine.sock")) > 103:
+        raise ValueError("TMPDIR is too long for a Unix socket; use a shorter writable TMPDIR")
     path.mkdir(mode=0o700, exist_ok=True)
     info = path.lstat()
     if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
         raise PermissionError(f"Expected an owner-only runtime directory: {path}")
     return path
+
+
+def acquire_engine_locks(home):
+    """Lock one installation even when clients have different sandbox temp roots.
+
+    flock supports read-only directory descriptors on macOS and Linux. No write to
+    the installation is needed. Keep any pre-0.5.0 lifetime lock too, if it exists,
+    so an older resident daemon cannot overlap a new model during an upgrade.
+    """
+    descriptors = []
+    try:
+        descriptors.append(os.open(home, os.O_RDONLY | os.O_DIRECTORY))
+        legacy = Path("/tmp") / f"visual-decider-{os.getuid()}-{installation_digest(home)}"
+        try:
+            descriptors.append(os.open(legacy / "engine.lock", os.O_RDONLY | os.O_NOFOLLOW))
+        except FileNotFoundError:
+            pass
+        for descriptor in descriptors:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return descriptors
+    except BaseException:
+        for descriptor in descriptors:
+            os.close(descriptor)
+        raise
 
 
 def fingerprint(config):
@@ -75,6 +115,8 @@ def exchange(path, request, *, timeout=3600):
 class SharedClient:
     def __init__(self, *, home=None, model=None, roots=None):
         self.home = Path(home or installation_home()).expanduser().resolve()
+        if not self.home.exists():
+            self.home.mkdir(parents=True, exist_ok=True)
         self.runtime = runtime_directory(self.home)
         self.socket = self.runtime / "engine.sock"
         self.model, self.roots = model, roots
@@ -124,12 +166,12 @@ class SharedClient:
                     raise RuntimeError(
                         f"Shared engine startup failed; see {self.runtime / 'engine.log'}"
                     )
-                with (self.runtime / "engine.lock").open("a") as lock:
+                try:
+                    locks = acquire_engine_locks(self.home)
+                except BlockingIOError:
+                    pass  # Another client is starting it, or the old process is exiting.
+                else:
                     try:
-                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    except BlockingIOError:
-                        pass  # Another client is starting it, or the old process is exiting.
-                    else:
                         with (self.runtime / "engine.log").open("ab") as log:
                             child = subprocess.Popen(
                                 [
@@ -141,29 +183,37 @@ class SharedClient:
                                     str(self.home),
                                     "--config",
                                     json.dumps(config),
-                                    "--lock-fd",
-                                    str(lock.fileno()),
+                                    *[arg for fd in locks for arg in ("--lock-fd", str(fd))],
                                 ],
                                 stdin=subprocess.DEVNULL,
                                 stdout=log,
                                 stderr=log,
                                 start_new_session=True,
-                                pass_fds=(lock.fileno(),),
+                                pass_fds=tuple(locks),
                             )
                         # Closing our descriptor (without LOCK_UN) leaves the child's
                         # inherited lifetime lock held until the entire process exits.
                         threading.Thread(target=child.wait, daemon=True).start()
+                    finally:
+                        for descriptor in locks:
+                            os.close(descriptor)
             time.sleep(0.1)
         raise RuntimeError(
-            f"Shared engine did not start within 30 seconds; see {self.runtime / 'engine.log'}"
+            "Shared engine did not start within 30 seconds. Another session may own this "
+            "installation under a different TMPDIR or an older runtime. Stop it from that "
+            "session, or let it exit after five idle minutes, then retry. "
+            f"Current runtime: {self.runtime}"
         )
 
     def call(self, operation, **payload):
+        started = time.perf_counter()
         expected = self.ensure_running(self.configuration())
         # Never replay inference after a disconnect: it may have already executed.
-        return exchange(
+        result = exchange(
             self.socket, {"operation": operation, "fingerprint": expected, "payload": payload}
         )
+        result.setdefault("timing", {})["round_trip_ms"] = 1000 * (time.perf_counter() - started)
+        return result
 
 
 class Handler(socketserver.StreamRequestHandler):
@@ -272,16 +322,14 @@ class SharedServer(socketserver.ThreadingUnixStreamServer):
             self.handle_request()
 
 
-def serve(home, config, *, lock_fd=None, idle_seconds=IDLE_SECONDS, factory=None):
+def serve(home, config, *, lock_fds=None, idle_seconds=IDLE_SECONDS, factory=None):
     runtime = runtime_directory(home)
     # Keep this descriptor alive through interpreter/model teardown, not merely the
     # server loop. Explicit launches also acquire it before constructing any worker.
-    if lock_fd is None:
-        lock_fd = os.open(runtime / "engine.lock", os.O_CREAT | os.O_RDWR, 0o600)
+    if lock_fds is None:
         try:
-            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lock_fds = acquire_engine_locks(home)
         except BlockingIOError:
-            os.close(lock_fd)
             raise RuntimeError("Shared engine is already running") from None
     path = runtime / "engine.sock"
     path.unlink(missing_ok=True)
@@ -305,15 +353,15 @@ def main():
     parser.add_argument("command", choices=["status", "stop", "serve"])
     parser.add_argument("--home", type=Path, default=installation_home())
     parser.add_argument("--config", help=argparse.SUPPRESS)
-    parser.add_argument("--lock-fd", type=int, help=argparse.SUPPRESS)
+    parser.add_argument("--lock-fd", type=int, action="append", help=argparse.SUPPRESS)
     args = parser.parse_args()
-    client = SharedClient(home=args.home)
     try:
+        client = SharedClient(home=args.home)
         if args.command == "serve":
             serve(
                 args.home,
                 json.loads(args.config) if args.config else client.configuration(),
-                lock_fd=args.lock_fd,
+                lock_fds=args.lock_fd,
             )
         else:
             print(

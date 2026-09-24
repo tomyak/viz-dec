@@ -2,6 +2,14 @@
 
 Local hardware: Apple M3 Max, 128 GiB RAM.
 
+## 0.5.0 timing and sandbox validation
+
+- Unit/integration suite: **114 passed**, 11 opt-in model tests skipped. Added deterministic cold/queued/warm timing checks, per-file batch timings, private temp-path validation, inherited read-only directory locks across temp roots, and legacy-lock upgrade exclusion.
+- A real macOS Seatbelt regression permits writes only inside the chosen `TMPDIR` (plus `/dev/null`). The installation is read-only. Cold/warm fake-engine requests succeed in one child process with no lock-file writes. This is a filesystem sandbox test, not a claim about every corporate agent policy.
+- A freshly installed E4B 4-bit runtime also passed its real synthetic model-health check under that filesystem policy. It returned `model_cached: false`, about **2.60 s loading** and **2.98 s execution**. Model files were already on disk; cold here means absent from process memory.
+- Two concurrent installed MCP clients, the skill CLI, a mixed image/video batch with two questions, and MCP/CLI health checks reused one model process. Exactly one initial MCP request reported a cold model (**6.17 s loading**); the other reported zero load time and charged its wait to `queue_ms`. The warmed image execution was **338 ms**. Round-trip times covered engine totals, and per-file times fit within batch execution time. Reproduce with `benchmarks/shared_smoke.py --home /path/to/isolated/install`.
+- These are functional/timing checks on a 128 GiB M3 Max, not new accuracy or 18 GiB performance claims. Test services were stopped afterward. Lint, formatting, release metadata, native plugin validation, and wheel/sdist builds passed.
+
 ## 0.4.1 older Claude Code compatibility
 
 - Reproduced `error: unknown command 'list'` using the real Claude Code **2.0.30** npm distribution, run from an isolated path without changing the normal Claude installation.

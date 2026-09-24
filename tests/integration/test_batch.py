@@ -39,6 +39,10 @@ def test_files_share_encodes_and_identical_decisions(tmp_path):
     assert backend.passes == 4  # Two questions, two cyclic passes, shared across both files.
     assert result["summary"]["decisions_reused"] == 2
     assert result["results"][1]["result"]["decisions"][0]["decision_reused"]
+    assert result["model_cached"] and result["timing"]["model_load_ms"] == 0
+    assert result["timing"]["execution_ms"] >= sum(
+        entry["timing"]["execution_ms"] for entry in result["results"]
+    )
 
 
 def test_video_decoded_once_for_all_questions(tmp_path, monkeypatch):
@@ -91,6 +95,8 @@ def test_plan_validation_errors_and_budgets(tmp_path):
     )
     assert [r["status"] for r in result["results"]] == ["error", "ok", "skipped"]
     assert result["summary"]["decision_budget_used"] == 3
+    assert all(entry["timing"]["execution_ms"] >= 0 for entry in result["results"])
+    assert result["results"][-1]["timing"]["execution_ms"] == 0
 
 
 def test_folder_filtering_and_limit(tmp_path):

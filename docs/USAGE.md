@@ -25,6 +25,34 @@ and consistent choice permutations can still be wrong. Videos are sampled still
 frames, not motion-model judgments; brief events between samples may be missed.
 See [scoring and video semantics](../ARCHITECTURE.md) for the full interpretation.
 
+### Timing and cache status
+
+Image, inspect, video, batch, and model-health results include these fields automatically:
+
+```json
+{
+  "model_cached": true,
+  "timing": {
+    "queue_ms": 0.2,
+    "model_load_ms": 0.0,
+    "execution_ms": 420.0,
+    "total_ms": 420.2,
+    "round_trip_ms": 425.0
+  }
+}
+```
+
+The values above are illustrative. All times are elapsed milliseconds.
+
+- `model_cached`: the model was already loaded **in memory when execution began**. A cold request returns `false`; a request queued behind that load returns `true`. This does not describe weights downloaded to disk or the image-feature `cache_hit` field.
+- `model_load_ms`: initialization charged to this request, including local model validation/loading. It is exactly zero for a resident model.
+- `execution_ms`: decoding, visual encoding, and scoring for the complete operation, after loading. For a batch, each entry also has `timing.execution_ms`, including failed files; skipped files have zero.
+- `queue_ms`: time waiting for the single engine worker, including other requests' model loading.
+- `total_ms`: queue + model load + execution, measured inside the engine.
+- `round_trip_ms`: added by the shared-service and HTTP clients; includes connection/request/response overhead, and shared-process discovery/startup. Direct Python and `--in-process` results omit it. It does not include starting the CLI/agent itself.
+
+Existing decision `latency_ms` still measures question scoring. Do not sum it to estimate complete batch/video execution, because decisions can be reused. Direct `Analyzer` calls start after construction, so they report `model_cached: true` and zero load time; historical backend loading remains in `analyzer.info()`. HTTP loads at server startup, so its subsequent requests also reuse the model. CLI health reports contain these fields in the `inference` check.
+
 ## Efficient batches
 
 The batch engine shares visual encodings, memoizes identical content/question decisions within the job, and decodes each video **once for all its questions**. Identical decoded pixels can reuse work even across image formats. It holds a bounded visual LRU and a bounded decision LRU; GPU scoring stays serialized. It does not claim simultaneous tensor batching or cross-question language-KV reuse. See [architecture](../ARCHITECTURE.md).

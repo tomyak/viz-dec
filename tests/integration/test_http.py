@@ -19,6 +19,10 @@ def test_http_errors_and_batch(tmp_path):
         data = {"path": str(image), "question": "Brightness?", "choices": ["Light", "Dark"]}
         response = client.post("/classify_image", json=data)
         assert response.status_code == 200 and response.json()["winner"] == "Light"
+        # HTTP warms its model at startup, before request execution.
+        assert response.json()["model_cached"] is True
+        assert response.json()["timing"]["model_load_ms"] == 0
+        assert response.json()["timing"]["execution_ms"] >= response.json()["latency_ms"]
         assert (
             client.post(
                 "/inspect_image",
@@ -71,7 +75,9 @@ def test_model_health_uses_the_http_worker():
 
     with TestClient(create_app(analyzer_factory=Engine), base_url="http://127.0.0.1") as client:
         assert not calls
-        assert client.post("/model_health", json={}).json() == {"status": "ok"}
+        result = client.post("/model_health", json={}).json()
+        assert result["status"] == "ok" and result["model_cached"] is True
+        assert result["timing"]["model_load_ms"] == 0
         assert calls == [1]
         assert client.post("/model_health", json={"path": "unexpected"}).status_code == 422
 

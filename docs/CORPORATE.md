@@ -7,13 +7,13 @@ The public upstream is MIT-licensed. A corporation can maintain a private fork o
 Authenticate through your organization's normal GitHub CLI, SSH agent, or Git credential helper. Clone an approved immutable tag or commit from the private repository, then invoke its installer. Example one-shell-command installation using GitHub CLI:
 
 ```bash
-gh repo clone YOUR_ORG/viz-dec "$HOME/visual-decider-install" -- --branch v0.4.1 --depth 1 && bash "$HOME/visual-decider-install/install.sh" --agents both --allow-root "$HOME/Work/Media"
+gh repo clone YOUR_ORG/viz-dec "$HOME/visual-decider-install" -- --branch v0.5.0 --depth 1 && bash "$HOME/visual-decider-install/install.sh" --agents both --allow-root "$HOME/Work/Media"
 ```
 
 Replace the organization and tag. For GitHub Enterprise, use your normal enterprise Git URL and credential helper:
 
 ```bash
-git clone --branch v0.4.1 --depth 1 git@github.company.example:AI/viz-dec.git "$HOME/visual-decider-install" && bash "$HOME/visual-decider-install/install.sh" --agents both
+git clone --branch v0.5.0 --depth 1 git@github.company.example:AI/viz-dec.git "$HOME/visual-decider-install" && bash "$HOME/visual-decider-install/install.sh" --agents both
 ```
 
 The installer registers a durable local marketplace copied from the approved source. Runtime paths do not depend on the checkout, and auto-refresh does not silently select a newer GitHub release. Remove the temporary checkout after successful installation if desired. Updates require running the approved version's installer. IT can deploy this same command using an existing endpoint-management system.
@@ -46,7 +46,7 @@ MCP defaults to the user's home directory. Restrict roots with repeated `--allow
 
 The core and MLX backend do not import Codex or Claude libraries. A single MCP implementation and shared skill sit behind separate native metadata. MCP sends local paths and structured decisions, not image bytes. The hosting coding agent may independently upload attachments or retain tool results according to its own settings; local inference does not change those policies.
 
-The default plugin has no TCP listener or login service. Agent sessions share one lazy model per installation through an owner-only Unix socket. The engine exits after five idle minutes; active jobs prevent termination. Runtime sockets/locks/logs live in an owner-only `/tmp/visual-decider-UID-HASH` directory. Separate installation homes, direct Python engines, `--in-process`, and manually started HTTP servers can still load separate models. Restart pre-0.3.0 agent sessions after upgrading to release their old private models. Optional HTTP must remain loopback-only and is intended for a trusted single-user machine; it does not provide tenant isolation or authentication.
+The default plugin has no TCP listener or login service. Agent sessions share one lazy model per installation through an owner-only Unix socket. The engine exits after five idle minutes; active jobs prevent termination. Runtime sockets/logs live in an owner-only `$TMPDIR/vd-UID-HASH` directory. The lifetime lock uses a read-only descriptor for the installation directory, requiring no lock-file write. On macOS, clients whose hosts omit `TMPDIR` recover the normal user temp directory. Different custom temp roots cannot start duplicate models for the same installation; the previous owner must exit before a new root takes over. No sandbox allowlist changes are made. Separate installation homes, direct Python engines, `--in-process`, and manually started HTTP servers can still load separate models. Restart pre-0.3.0 agent sessions after upgrading to release their old private models. Optional HTTP must remain loopback-only and is intended for a trusted single-user machine; it does not provide tenant isolation or authentication.
 
 The installer selects E2B 4-bit for 8–15 GiB, E4B 4-bit for 16–31 GiB, and E4B BF16 for 32+ GiB. For corporate approval, specify an approved model ID plus `--revision`, or a pre-provisioned local snapshot with `--model`. Explicit choices survive upgrades; `--model auto` opts back into hardware selection. The legacy default is migrated automatically, while legacy custom snapshots are preserved. Repeated installation validates/reuses cached required files and registers the same integration name; it does not load weights unless `--check-model` is requested. Concurrent installers for one installation are rejected by a lock.
 

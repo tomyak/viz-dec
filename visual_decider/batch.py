@@ -3,6 +3,7 @@
 import copy
 import hashlib
 import os
+import time
 from collections import OrderedDict
 from pathlib import Path
 
@@ -147,10 +148,18 @@ def analyze_batch(
     scorer = BatchScorer(analyzer, method, policy)
     results, remaining_frames, remaining_decisions = [], max_total_frames, max_decisions
     for path, selected in plan:
+        started = time.perf_counter()
         try:
             kind = "video" if Path(path).suffix.lower() in VIDEO_SUFFIXES else "image"
             if remaining_decisions < len(selected) or (kind == "video" and remaining_frames < 1):
-                results.append(dict(path=path, status="skipped", reason="batch_budget_exhausted"))
+                results.append(
+                    dict(
+                        path=path,
+                        status="skipped",
+                        reason="batch_budget_exhausted",
+                        timing={"execution_ms": 0.0},
+                    )
+                )
                 continue
             if kind == "video":
                 cap = min(max_frames, remaining_frames, remaining_decisions // len(selected))
@@ -165,9 +174,24 @@ def analyze_batch(
                 remaining_decisions -= len(selected)
                 rgb, _ = load_image(path, analyzer.roots)
                 value = {"decisions": scorer.inspect(rgb, selected)}
-            results.append(dict(path=path, kind=kind, status="ok", result=value))
+            results.append(
+                dict(
+                    path=path,
+                    kind=kind,
+                    status="ok",
+                    result=value,
+                    timing={"execution_ms": 1000 * (time.perf_counter() - started)},
+                )
+            )
         except (OSError, ValueError, RuntimeError) as exc:
-            results.append(dict(path=path, status="error", error=str(exc)))
+            results.append(
+                dict(
+                    path=path,
+                    status="error",
+                    error=str(exc),
+                    timing={"execution_ms": 1000 * (time.perf_counter() - started)},
+                )
+            )
     return dict(
         results=results,
         summary=dict(

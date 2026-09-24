@@ -14,7 +14,7 @@ The install command picks a model for your Mac, downloads missing weights, insta
 **1. Copy this into Terminal:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents claude --integration skill --check-model
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents claude --integration skill --check-model
 ```
 
 **2. Restart Claude Code.** Drag in a photo (or paste its full file path), then ask:
@@ -30,7 +30,7 @@ Claude uses the local model and reports its answer.
 **1. Copy this into Terminal** with the Codex CLI installed:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents codex --integration skill --check-model
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents codex --integration skill --check-model
 ```
 
 **2. Restart Codex.** Drag in a photo (or paste its full file path), then ask:
