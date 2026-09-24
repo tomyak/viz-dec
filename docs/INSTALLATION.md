@@ -10,12 +10,12 @@ for model selection, MCP or plugin installation, custom folders, and diagnostics
 Prerequisites: Apple Silicon macOS, at least 8 GiB of unified memory, Git, Python 3, and the CLI for the agent you use. The installer detects physical memory and selects a model, then provisions Python 3.12 with uv if needed.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.1/install.sh | bash
 ```
 
 This one command:
 
-- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.5.0`.
+- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.5.1`.
 - Chooses a model for the Mac's memory, printing the selection before downloading anything.
 - Reuses complete cached Gemma weights or downloads missing weights from Hugging Face. Known models use pinned commit revisions.
 - Registers the plugin with every detected supported agent, including MCP configuration and its skill. **No manual SKILL.md copying.**
@@ -26,7 +26,7 @@ This one command:
 To install the skill for Claude Code **without a marketplace or MCP connection**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents claude --integration skill
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.1/install.sh | bash -s -- --agents claude --integration skill
 ```
 
 Use `--agents codex` or `--agents both` for the other agent choices. All modes install the same runtime and download the selected model when absent:
@@ -108,17 +108,20 @@ Local plugin loading still follows your organization's plugin policy.
 The default check validates configuration and local model files, starts/reuses the shared service, then freshly encodes two generated color images and checks their expected answers across choice rotations. It reports stage-specific errors, model metadata, memory counters, timing, and the service PID/log location as JSON. Failures exit with status 1. It never downloads weights; rerun installation to provision missing files. `preflight_ok` with `--no-inference` means inference was skipped. The synthetic smoke test checks basic model operation, not accuracy on your real tasks. Run it after installation or for diagnosis, not before every request. Add `--check-model` to an installation command to run it at the end.
 
 
-## Sandbox lock-file errors
+## Sandbox and shared-engine errors
 
-Release 0.5.0 fixes the error about writing `/tmp/visual-decider-UID-HASH/engine.lock` outside the sandbox. Runtime sockets and logs now respect `$TMPDIR`, and model ownership uses a read-only lock on the existing installation directory. The fix does not change agent sandbox permissions.
+The recommended installation is `--integration skill-mcp`: the agent gets the skill and calls the local engine through its configured MCP tools. This requires no marketplace and leaves sandbox policy unchanged. Use `model_health` through MCP to test it. A health check run in Terminal verifies that environment; it does not verify the agent's Bash sandbox.
 
-From a regular terminal on the affected Mac, stop the old idle runtime **before** upgrading, then install the fix:
+Release 0.5.0 removed writable runtime lock files and moved sockets/logs to `$TMPDIR`. Release 0.5.1 also discovers an existing engine across the current temp directory, the normal OS user temp directory, and Claude's standard `/tmp/claude-UID` directory. Discovery does not write to another directory. This fixes the 30-second startup timeout when a Terminal model owns the installation and an accessible sandbox client uses a different temp root.
+
+Upgrade and configure Claude from Terminal:
 
 ```bash
-~/.local/share/visual-decider/bin/visual-decider-service stop
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents claude
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.1/install.sh | bash -s -- --agents claude --integration skill-mcp --check-model
 ```
 
-The installer remembers your existing skill/MCP/plugin choice and reuses cached model files. Use `--agents codex` or `--agents both` as appropriate. Restart the agent and retry your original request. If the old service reports busy, let the job finish before stopping it.
+Restart Claude, then ask: **“Use visual-decider's MCP model_health tool.”** For an existing batch manifest, ask Claude to read the JSON and pass its contents to the MCP `analyze_batch` tool, preserving all questions and sampling options. `manifest` is a CLI option, not an MCP request field. The installer reuses complete cached weights and replaces its own prior integration without duplicate registrations. Managed MCP restrictions still apply.
 
-Use the same writable `TMPDIR` for sessions that need to discover one another's shared model. If another temp root or an older session still owns the model, the new session waits up to 30 seconds and reports the conflict instead of loading a second copy. Stop that runtime from its original session, or let it exit after five idle minutes. Unix socket/process restrictions imposed separately by an organization still apply; this change addresses filesystem write restrictions.
+A sandbox may separately deny Unix socket connections or creation, even when the socket path is writable. In that case the CLI reports the denied path or the child process's startup error. Waiting five minutes, stopping the old engine, or changing `TMPDIR` does not grant socket permission. Do not assume an idle timeout proves a permission issue is fixed. Use the approved MCP integration or have the sandbox policy reviewed for the exact required socket; the installer does not add broad socket allowances or excluded commands. See [Claude sandbox documentation](https://code.claude.com/docs/en/sandboxing).
+
+Runtime health JSON includes the installed version and engine log path. Preserve the raw error and startup log when reporting a problem. Arbitrary custom temp directories outside the discovery locations can still produce ownership conflicts; stop the owning runtime from its original environment or let it exit after five idle minutes before using that custom root.

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from importlib.metadata import version
 from pathlib import Path
 
 from ..models.download import DEFAULT_MODEL, ensure_model
@@ -11,7 +12,13 @@ from .shared import SharedClient
 
 def check_health(*, home=None, inference=True):
     home = Path(home or installation_home()).expanduser().resolve()
-    report = {"status": "error", "home": str(home), "inference_tested": False, "checks": []}
+    report = {
+        "status": "error",
+        "version": version("visual-decider"),
+        "home": str(home),
+        "inference_tested": False,
+        "checks": [],
+    }
     stage = "configuration"
     hints = {
         "configuration": f"Check {home / 'config.json'} or rerun the installer.",
@@ -30,7 +37,9 @@ def check_health(*, home=None, inference=True):
         report["log"] = str(client.runtime / "engine.log")
         if inference:
             client.ensure_running(client.configuration())
-        report["checks"].append({"stage": stage, "status": "ok", **{"details": client.status()}})
+        details = client.status()
+        report["log"] = str(client.runtime / "engine.log")
+        report["checks"].append({"stage": stage, "status": "ok", "details": details})
         stage = "inference"
         if inference:
             result = client.call("model_health")

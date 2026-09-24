@@ -16,7 +16,6 @@ import socketserver
 import stat
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 from importlib.metadata import version
@@ -42,26 +41,56 @@ def installation_digest(home):
     return hashlib.sha256(str(Path(home).resolve()).encode()).hexdigest()[:20]
 
 
-def runtime_directory(home):
-    base = os.getenv("TMPDIR")
-    if not base and sys.platform == "darwin":
-        # Some MCP hosts filter TMPDIR. Recover the user's normal macOS temp root
-        # so those clients still find the same daemon as terminal/skill clients.
-        base = subprocess.check_output(
-            ["/usr/bin/getconf", "DARWIN_USER_TEMP_DIR"], text=True, timeout=5
-        ).strip()
-    root = Path(base or tempfile.gettempdir())
+def user_temp_directory():
+    if sys.platform == "darwin":
+        return Path(
+            subprocess.check_output(
+                ["/usr/bin/getconf", "DARWIN_USER_TEMP_DIR"], text=True, timeout=5
+            ).strip()
+        )
+    # Unlike tempfile.gettempdir(), this lookup must not follow the caller's
+    # TMPDIR override; it is also used to discover engines started elsewhere.
+    return Path("/tmp")
+
+
+def runtime_directory(home, *, root=None, create=True):
+    root = Path(root or os.getenv("TMPDIR") or user_temp_directory())
     if not root.is_absolute():
         raise ValueError("TMPDIR must be an absolute, writable directory")
     # Keep the supplied spelling: resolving /var to /private/var wastes socket bytes.
     path = root / f"vd-{os.getuid()}-{installation_digest(home)}"
     if len(os.fsencode(path / "engine.sock")) > 103:
         raise ValueError("TMPDIR is too long for a Unix socket; use a shorter writable TMPDIR")
+    if not create:
+        return path
     path.mkdir(mode=0o700, exist_ok=True)
+    validate_runtime_directory(path)
+    return path
+
+
+def validate_runtime_directory(path):
     info = path.lstat()
     if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
         raise PermissionError(f"Expected an owner-only runtime directory: {path}")
-    return path
+
+
+def runtime_candidates(home, preferred):
+    # Discovery is read-only. These are the ordinary terminal/MCP and Claude
+    # sandbox locations; the lifetime installation lock still covers custom roots.
+    roots = [preferred.parent, user_temp_directory(), Path(f"/tmp/claude-{os.getuid()}")]
+    return list(dict.fromkeys(runtime_directory(home, root=root, create=False) for root in roots))
+
+
+def startup_error(runtime):
+    log = runtime / "engine.log"
+    try:
+        with log.open("rb") as stream:
+            stream.seek(0, os.SEEK_END)
+            stream.seek(max(0, stream.tell() - 4096))
+            detail = stream.read(4096).decode(errors="replace").strip()
+    except OSError as exc:
+        detail = f"Cannot read startup log: {exc}"
+    return RuntimeError(f"Shared engine startup failed; see {log}\n{detail}")
 
 
 def acquire_engine_locks(home):
@@ -117,15 +146,32 @@ class SharedClient:
         self.home = Path(home or installation_home()).expanduser().resolve()
         if not self.home.exists():
             self.home.mkdir(parents=True, exist_ok=True)
-        self.runtime = runtime_directory(self.home)
+        self.startup_runtime = runtime_directory(self.home, create=False)
+        self.runtime = self.startup_runtime
+        self.candidates = runtime_candidates(self.home, self.startup_runtime)
         self.socket = self.runtime / "engine.sock"
         self.model, self.roots = model, roots
 
     def status(self):
-        try:
-            return exchange(self.socket, {"operation": "status"}, timeout=5)
-        except (FileNotFoundError, ConnectionError):
-            return {"status": "stopped", "loaded": False}
+        for runtime in dict.fromkeys([self.runtime, *self.candidates]):
+            path = runtime / "engine.sock"
+            try:
+                validate_runtime_directory(runtime)
+                if not stat.S_ISSOCK(path.lstat().st_mode):
+                    raise PermissionError(f"Expected a Unix socket: {path}")
+                result = exchange(path, {"operation": "status"}, timeout=5)
+            except (FileNotFoundError, ConnectionError):
+                continue
+            except PermissionError as exc:
+                raise RuntimeError(
+                    f"Shared engine discovery/access denied at {path}: {exc}. "
+                    "No inference was submitted. Check the sandbox's file/socket policy; "
+                    "use the installed MCP tools when available. Waiting for idle shutdown "
+                    "does not grant socket access."
+                ) from exc
+            self.runtime, self.socket = runtime, path
+            return result
+        return {"status": "stopped", "loaded": False}
 
     def stop(self):
         if self.status()["status"] == "stopped":
@@ -163,15 +209,17 @@ class SharedClient:
                 self.stop()
             if status["status"] == "stopped":
                 if child is not None and child.poll() is not None:
-                    raise RuntimeError(
-                        f"Shared engine startup failed; see {self.runtime / 'engine.log'}"
-                    )
+                    raise startup_error(self.startup_runtime)
                 try:
                     locks = acquire_engine_locks(self.home)
                 except BlockingIOError:
                     pass  # Another client is starting it, or the old process is exiting.
                 else:
                     try:
+                        self.runtime = runtime_directory(
+                            self.home, root=self.startup_runtime.parent
+                        )
+                        self.socket = self.runtime / "engine.sock"
                         with (self.runtime / "engine.log").open("ab") as log:
                             child = subprocess.Popen(
                                 [
@@ -188,6 +236,7 @@ class SharedClient:
                                 stdin=subprocess.DEVNULL,
                                 stdout=log,
                                 stderr=log,
+                                env={**os.environ, "TMPDIR": str(self.startup_runtime.parent)},
                                 start_new_session=True,
                                 pass_fds=tuple(locks),
                             )
@@ -285,6 +334,7 @@ class SharedServer(socketserver.ThreadingUnixStreamServer):
                     "model": self.config.get("model"),
                     "fingerprint": self.identity,
                     "idle_timeout_seconds": self.idle_seconds,
+                    "runtime": str(Path(self.server_address).parent),
                 }
             if operation == "stop":
                 if self.active:

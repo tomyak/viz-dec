@@ -7,14 +7,14 @@ Ask **Claude Code** or **Codex** questions about images and videos using a local
 
 **You need:** an Apple Silicon Mac (M1 or newer), 8 GB+ memory, Git, Python 3, and your agent’s CLI installed.
 
-The install command picks a model for your Mac, downloads missing weights, installs the skill, and runs a health check. Existing model choices and complete cached weights are reused.
+The install command picks a model for your Mac, downloads missing weights, installs the skill and MCP connection, and runs a health check. Existing model choices and complete cached weights are reused.
 
 ## Claude Code
 
 **1. Copy this into Terminal:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents claude --integration skill --check-model
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.1/install.sh | bash -s -- --agents claude --integration skill-mcp --check-model
 ```
 
 **2. Restart Claude Code.** Drag in a photo (or paste its full file path), then ask:
@@ -23,14 +23,14 @@ curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | 
 Use visual-decider on this image. Is there one person or two people?
 ```
 
-Claude uses the local model and reports its answer.
+Claude uses the local model through MCP and reports its answer. No plugin marketplace is required.
 
 ## Codex
 
 **1. Copy this into Terminal** with the Codex CLI installed:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | bash -s -- --agents codex --integration skill --check-model
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.1/install.sh | bash -s -- --agents codex --integration skill-mcp --check-model
 ```
 
 **2. Restart Codex.** Drag in a photo (or paste its full file path), then ask:
@@ -39,7 +39,7 @@ curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.5.0/install.sh | 
 Use visual-decider on this image. Is there one person or two people?
 ```
 
-Codex uses the local model and reports its answer.
+Codex uses the local model through MCP and reports its answer. No plugin marketplace is required.
 
 ## Try more
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1 — 2026-09-24
+
+- Discover and reuse an existing engine across the normal OS user temp directory, the current `TMPDIR`, and Claude's standard sandbox temp directory. Discovery is read-only; new engines still write only under the caller's temp directory, and the installation lifetime lock prevents duplicate models.
+- Report socket-access denials immediately and include the bounded startup log on child-process failures. Health reports include the installed version and the discovered engine's log location.
+- Recommend skill-with-MCP installation in the Claude/Codex quick starts, requiring no marketplace. Clarify that Bash socket permissions are separate from writable temp paths and that idle shutdown cannot grant access.
+
 ## 0.5.0 — 2026-09-24
 
 - Return `model_cached` and per-request model-load, execution, queue, and total times for image, video, batch, and model-health decisions. Shared/HTTP clients also report round-trip time; batches report execution time per file.

@@ -50,6 +50,16 @@ def test_invalid_tmpdir_never_falls_back(tmp_path, monkeypatch):
         shared.runtime_directory(tmp_path)
 
 
+def test_unix_discovery_root_does_not_follow_tmpdir_override(tmp_path, temp_root, monkeypatch):
+    monkeypatch.setattr(shared.sys, "platform", "linux")
+    assert shared.user_temp_directory() == Path("/tmp")
+    preferred = shared.runtime_directory(tmp_path, create=False)
+    assert preferred.parent == temp_root
+    candidates = shared.runtime_candidates(tmp_path, preferred)
+    assert shared.runtime_directory(tmp_path, root="/tmp", create=False) in candidates
+    assert list(temp_root.iterdir()) == []
+
+
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS user temp directory")
 def test_mcp_host_without_tmpdir_finds_macos_user_directory(tmp_path, monkeypatch):
     import subprocess

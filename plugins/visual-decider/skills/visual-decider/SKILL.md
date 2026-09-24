@@ -9,6 +9,13 @@ available, use them. Otherwise use the installed CLI through this skill's
 manifests. Both routes share one runtime and produce the same decision schema.
 Do not retry a failed inference through another route: it may already have run.
 
+For sandboxed agents, prefer the configured MCP tools for decisions and
+`model_health`. Bash CLI access also needs permission to connect/bind Unix sockets,
+even when `$TMPDIR` is writable. On failure, report the actual health stage/error
+and startup log rather than assuming a writable lock-file problem. A different
+temp directory can hide a running engine; an idle timeout does not grant socket
+permission. See [CLI diagnostics](references/cli.md) for this distinction.
+
 1. Pass the actual absolute path from the attachment or screenshot. Files can be anywhere under the configured roots; the fixture folder has no special role. If an attachment lacks a local path, obtain it using the host's file tools. Never invent a path.
 2. Preserve the user's exact question and supplied choices. For a yes/no question without choices, use `["Yes", "No"]`. Do not replace “Did the patient fall?” with a posture classification, or broaden/narrow the alternatives silently. If clarification is essential, ask before changing the task.
 3. Call `classify_image` for one question or `inspect_image` for multiple questions on the same image; the latter reuses visual features. Supply 2–10 distinct choices. When designing an open-ended choice set, include an appropriate “Other” alternative and state your choices.

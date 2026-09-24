@@ -2,6 +2,14 @@
 
 Local hardware: Apple M3 Max, 128 GiB RAM.
 
+## 0.5.1 shared-engine discovery and socket restrictions
+
+- Unit/integration suite: **122 passed**, 11 unchanged opt-in model tests skipped. New cases cover read-only cross-temp discovery, concurrent startup from two discoverable roots with one model load, restart into the caller's writable root after the discovered engine exits, and explicit permission failures before inference.
+- Actual macOS Seatbelt tests exercise both writable-temp-only filesystem policy and that policy plus denied network operations. A sandbox client discovers a Terminal model without writes to either the installation or the Terminal's runtime directory. With socket operations denied, an existing engine reports access denial; a cold engine reports the startup log's `Operation not permitted`. Neither case is reported as a successful sandbox inference or fixed by idle waiting.
+- A fresh **skill-mcp** installation with isolated `CLAUDE_CONFIG_DIR` and install home registered a standalone skill and direct MCP entry without marketplace registration. The real Claude CLI reported **Connected**.
+- Real E4B 4-bit validation reused one model PID across two concurrent installed MCP clients, the skill CLI, a health check launched under a different sandbox `TMPDIR`, a mixed image/video batch with two questions, and MCP/CLI health checks. The cross-temp health check returned `model_cached: true`, exactly zero model load time, and the original engine's log path. The same check with socket access denied failed at service discovery without submitting inference. Reproduce with `benchmarks/shared_smoke.py --home /path/to/isolated/install`; its service is stopped afterward.
+- Lint, formatting, package builds, release checks, and plugin/skill validators passed. No new accuracy or memory-capacity claims are made. The tests model the relevant OS restrictions; they do not claim every organization's Claude policy permits the CLI or MCP.
+
 ## 0.5.0 timing and sandbox validation
 
 - Unit/integration suite: **114 passed**, 11 opt-in model tests skipped. Added deterministic cold/queued/warm timing checks, per-file batch timings, private temp-path validation, inherited read-only directory locks across temp roots, and legacy-lock upgrade exclusion.

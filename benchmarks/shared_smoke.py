@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 import sys
+import tempfile
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -12,6 +13,41 @@ from mcp.client.session import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
 from visual_decider.adapters.shared import SharedClient
+
+
+async def sandbox_clients(home, pid):
+    with tempfile.TemporaryDirectory(prefix="vdsm-", dir="/tmp") as temporary:
+        writable = str(Path(temporary).resolve())
+        profile = (
+            "(version 1)(allow default)(deny file-write*)"
+            f'(allow file-write* (subpath {json.dumps(writable)}) (literal "/dev/null"))'
+        )
+        for allow_sockets in (True, False):
+            process = await asyncio.create_subprocess_exec(
+                "/usr/bin/sandbox-exec",
+                "-p",
+                profile if allow_sockets else profile + "(deny network*)",
+                str(home / "bin/visual-decider-health"),
+                env={**os.environ, "TMPDIR": writable, "PYTHONDONTWRITEBYTECODE": "1"},
+                stdout=asyncio.subprocess.PIPE,
+            )
+            output, _ = await process.communicate()
+            report = json.loads(output)
+            if allow_sockets:
+                assert process.returncode == 0, report
+                assert report["service"]["pid"] == pid
+                assert report["checks"][-1]["model_cached"]
+                assert report["checks"][-1]["timing"]["model_load_ms"] == 0
+                assert not report["log"].startswith(writable)
+            else:
+                assert process.returncode == 1, report
+                assert report["checks"][-1]["stage"] == "service"
+                assert "No inference was submitted" in report["checks"][-1]["error"]
+            assert list(Path(temporary).iterdir()) == []
+    print(
+        "Different-TMPDIR sandbox reused the model; socket-denying policy failed explicitly",
+        flush=True,
+    )
 
 
 async def main():
@@ -88,6 +124,7 @@ async def main():
             assert json.loads(output)["timing"]["model_load_ms"] == 0
             assert client.status()["pid"] == pid
             print("Installed skill CLI reused the same model PID and visual cache", flush=True)
+            await sandbox_clients(home, pid)
             batch = await sessions[0].call_tool(
                 "analyze_batch",
                 {

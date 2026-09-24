@@ -11,7 +11,8 @@ import pytest
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS Seatbelt sandbox")
-def test_daemon_inherits_writable_tmpdir_with_read_only_installation(tmp_path):
+@pytest.mark.parametrize("allow_sockets", [True, False])
+def test_daemon_inherits_writable_tmpdir_with_read_only_installation(tmp_path, allow_sockets):
     home = tmp_path / "installation"
     home.mkdir()
     (home / "config.json").write_text(json.dumps({"model": "fake", "roots": ["/"]}))
@@ -36,7 +37,9 @@ import json, subprocess, sys, time
 from visual_decider.adapters.shared import SharedClient
 original = subprocess.Popen
 def spawn(command, **kwargs):
-    return original([command[0], sys.argv[2], *command[3:]], **kwargs)
+    if command[1:3] == ["-m", "visual_decider.adapters.shared"]:
+        command = [command[0], sys.argv[2], *command[3:]]
+    return original(command, **kwargs)
 subprocess.Popen = spawn
 client = SharedClient(home=sys.argv[1])
 try:
@@ -60,6 +63,8 @@ finally:
             "(version 1)(allow default)(deny file-write*)"
             f'(allow file-write* (subpath {json.dumps(writable)}) (literal "/dev/null"))'
         )
+        if not allow_sockets:
+            profile += "(deny network*)"
         run = subprocess.run(
             [
                 "/usr/bin/sandbox-exec",
@@ -75,6 +80,11 @@ finally:
             text=True,
             timeout=45,
         )
+        if not allow_sockets:
+            assert run.returncode == 1
+            assert "Shared engine startup failed" in run.stderr
+            assert "Operation not permitted" in run.stderr
+            return
         assert run.returncode == 0, run.stderr
         result = json.loads(run.stdout)
         assert Path(result["runtime"]).parent == Path(writable)
