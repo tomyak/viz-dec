@@ -92,6 +92,14 @@ def install(args):
         stage = Path(staging)
         for folder in ("plugins", ".agents", ".claude-plugin"):
             shutil.copytree(source / folder, stage / folder)
+        # MCP hosts may strip arbitrary inherited environment variables. Bind the
+        # installed launcher explicitly while keeping the published manifest portable.
+        launcher_path = stage / "plugins/visual-decider/.mcp.json"
+        launcher = json.loads(launcher_path.read_text())
+        launcher["mcpServers"]["visual-decider"].setdefault("env", {})["VISUAL_DECIDER_HOME"] = str(
+            home
+        )
+        write_json(launcher_path, launcher)
         market.mkdir(exist_ok=True)
         for folder in ("plugins", ".agents", ".claude-plugin"):
             if (market / folder).exists():

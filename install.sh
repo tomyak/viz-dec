@@ -3,7 +3,7 @@
 set -euo pipefail
 install_home="${VISUAL_DECIDER_HOME:-$HOME/.local/share/visual-decider}"
 repo="${VISUAL_DECIDER_REPOSITORY:-https://github.com/tomyak/viz-dec.git}"
-ref="${VISUAL_DECIDER_REF:-v0.2.0}"
+ref="${VISUAL_DECIDER_REF:-v0.2.1}"
 if [[ "$(uname -s)" != Darwin || "$(uname -m)" != arm64 ]]; then
   echo 'The bundled MLX backend requires Apple Silicon macOS.' >&2
   exit 1

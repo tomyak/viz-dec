@@ -1,6 +1,6 @@
 {
   "name": "visual-decider",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Local finite-choice image and sampled-video decisions using Gemma and MLX.",
   "author": {
     "name": "Thomas Chernetsky",

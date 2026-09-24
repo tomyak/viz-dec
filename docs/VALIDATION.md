@@ -16,3 +16,7 @@ Local hardware: Apple M3 Max, 128 GiB RAM.
 No new frontier-agent conversation was launched to test automatic skill selection. Fresh sessions are needed to discover the installed plugin. An upstream Transformers audio mel-filter warning appears at model load; it did not prevent the image/video tests. Audio is outside this API.
 
 Synthetic fixtures and local smoke tests do not establish real-world accuracy, calibrated error rates, precise OCR, or temporal action recognition. Scores can remain confidently wrong. GPU tensor batching and cross-question language-KV sharing are not implemented; shared encodes, decoder work, and bounded decision memoization are implemented and tested.
+
+## 0.2.1 installer compatibility check
+
+The installer now writes `VISUAL_DECIDER_HOME` explicitly into the installed MCP configuration. A fresh installation into a directory containing spaces passed all four real MCP tool calls, including the mixed batch, when launched with the MCP SDK's filtered environment. The 54-test suite and native manifest validators passed again. Both agent plugins were upgraded through their normal CLI commands.

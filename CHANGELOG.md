@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — 2026-09-24
+
+- Bind the installed MCP launcher to its installation directory explicitly, supporting custom paths even when agent hosts filter inherited environment variables.
+
 ## 0.2.0 — 2026-09-24
 
 - Publish an agent-independent Python engine with optional MLX, MCP, and HTTP dependencies.

@@ -9,12 +9,12 @@ Local finite-choice image and video decisions for **Codex, Claude Code, Python, 
 Prerequisites: Apple Silicon macOS, Git, Python 3, and the CLI for the agent you use. Allow sufficient disk space and memory for the selected model; the default E4B backend measured approximately 17 GB peak MLX allocation on an M3 Max. The installer provisions Python 3.12 with uv if needed.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.2.0/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.2.1/install.sh | bash
 ```
 
 This one command:
 
-- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.2.0`.
+- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.2.1`.
 - Reuses complete cached Gemma weights or downloads missing weights from Hugging Face. Known models use pinned commit revisions.
 - Registers the plugin with every detected supported agent, including MCP configuration and its skill. **No manual SKILL.md copying.**
 - Uses your home directory as the default media access root. Opens no listening port and installs no login service.
@@ -31,7 +31,7 @@ bash install.sh --agents claude --allow-root /  # all media readable by your acc
 bash install.sh --agents none                # engine and CLI only
 ```
 
-Roots can be repeated. Existing settings are retained unless explicitly overridden. Configuration is in `~/.local/share/visual-decider/config.json`; it stores a local model path and allowed roots, never credentials. Set `VISUAL_DECIDER_HOME` consistently in the installer and agent environment to relocate it.
+Roots can be repeated. Existing settings are retained unless explicitly overridden. Configuration is in `~/.local/share/visual-decider/config.json`; it stores a local model path and allowed roots, never credentials. Set `VISUAL_DECIDER_HOME` when running the installer to relocate it. The installed MCP launcher records that location explicitly; use the same variable for direct CLI commands.
 
 Start a fresh Codex or Claude Code session after installation. The stdio MCP process initializes quickly, loads Gemma on the first tool call, and retains it for that process's lifetime. Closing the agent releases its process. Separate agents may load separate model instances; optional shared HTTP mode is documented below.
 
@@ -95,7 +95,7 @@ For multiple video questions, each sample contains a `decisions` array; `questio
 The installer prints the executable location; it does not modify shell startup files. For convenience:
 
 ```bash
-export PATH="$HOME/.local/share/visual-decider/versions/0.2.0/bin:$PATH"
+export PATH="$HOME/.local/share/visual-decider/versions/0.2.1/bin:$PATH"
 visual-decide image /path/to/screen.png 'Is an error visible?' Yes No
 visual-decide video /path/to/clip.mp4 'Is a person visible?' Yes No --sample-interval 1
 visual-decide batch --folder /path/to/media --questions-file questions.json --recursive

@@ -24,6 +24,11 @@ def test_install_downloads_before_registering_and_excludes_unrelated_files(tmp_p
     for folder in ["plugins", ".agents", ".claude-plugin", ".local"]:
         (source / folder).mkdir()
         (source / folder / "sentinel").write_text("fixture")
+    plugin = source / "plugins/visual-decider"
+    plugin.mkdir()
+    (plugin / ".mcp.json").write_text(
+        json.dumps({"mcpServers": {"visual-decider": {"command": "/bin/sh"}}})
+    )
     monkeypatch.setenv("VISUAL_DECIDER_HOME", str(home))
     monkeypatch.setattr(installer.platform, "system", lambda: "Darwin")
     monkeypatch.setattr(installer.platform, "machine", lambda: "arm64")
@@ -54,6 +59,9 @@ def test_install_downloads_before_registering_and_excludes_unrelated_files(tmp_p
     assert "--frozen" in commands[0] and "--no-editable" in commands[0]
     assert commands[1][0].endswith("visual-decider-model")
     assert not (home / "marketplace/.local").exists()
+    launcher = json.loads((home / "marketplace/plugins/visual-decider/.mcp.json").read_text())
+    assert launcher["mcpServers"]["visual-decider"]["env"]["VISUAL_DECIDER_HOME"] == str(home)
+
     assert json.loads((home / "config.json").read_text())["model"] == str(weights)
     # Provisioning failure must never register plugins or overwrite previous settings.
     old = (home / "config.json").read_text()
