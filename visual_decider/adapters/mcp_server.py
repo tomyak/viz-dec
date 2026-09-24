@@ -11,6 +11,7 @@ from ..runtime import EngineWorker
 from .contracts import (
     BatchRequest,
     ClassifyRequest,
+    HealthRequest,
     InspectRequest,
     MediaItem,
     Policy,
@@ -115,6 +116,11 @@ def create_server(client=None, *, model=None, roots=None):
                 policy=policy or Policy(),
             ),
         )
+
+    @server.tool(structured_output=True)
+    def model_health() -> dict[str, Any]:
+        """Load/reuse the model and test fresh vision/scoring on two synthetic images."""
+        return call("model_health", HealthRequest())
 
     return server
 

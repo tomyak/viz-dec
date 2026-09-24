@@ -58,13 +58,19 @@ def archive():
     check()
     output = ROOT / "dist"
     output.mkdir(exist_ok=True)
-    path = output / f"visual-decider-plugin-v{version()}.zip"
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
-        for file in sorted(PLUGIN.rglob("*")):
-            if file.is_file():
-                z.write(file, Path("visual-decider") / file.relative_to(PLUGIN))
-        z.write(ROOT / "LICENSE", "visual-decider/LICENSE")
-    print(path)
+    for kind, root in (("plugin", PLUGIN), ("skill", PLUGIN / "skills/visual-decider")):
+        path = output / f"visual-decider-{kind}-v{version()}.zip"
+        with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+            for file in sorted(root.rglob("*")):
+                if (
+                    file.is_file()
+                    and "__pycache__" not in file.parts
+                    and file.name != "runtime.json"
+                    and file.suffix != ".pyc"
+                ):
+                    z.write(file, Path("visual-decider") / file.relative_to(root))
+            z.write(ROOT / "LICENSE", "visual-decider/LICENSE")
+        print(path)
 
 
 def main():

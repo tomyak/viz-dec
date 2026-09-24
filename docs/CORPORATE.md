@@ -7,16 +7,20 @@ The public upstream is MIT-licensed. A corporation can maintain a private fork o
 Authenticate through your organization's normal GitHub CLI, SSH agent, or Git credential helper. Clone an approved immutable tag or commit from the private repository, then invoke its installer. Example one-shell-command installation using GitHub CLI:
 
 ```bash
-gh repo clone YOUR_ORG/viz-dec "$HOME/visual-decider-install" -- --branch v0.3.0 --depth 1 && bash "$HOME/visual-decider-install/install.sh" --agents both --allow-root "$HOME/Work/Media"
+gh repo clone YOUR_ORG/viz-dec "$HOME/visual-decider-install" -- --branch v0.4.0 --depth 1 && bash "$HOME/visual-decider-install/install.sh" --agents both --allow-root "$HOME/Work/Media"
 ```
 
 Replace the organization and tag. For GitHub Enterprise, use your normal enterprise Git URL and credential helper:
 
 ```bash
-git clone --branch v0.3.0 --depth 1 git@github.company.example:AI/viz-dec.git "$HOME/visual-decider-install" && bash "$HOME/visual-decider-install/install.sh" --agents both
+git clone --branch v0.4.0 --depth 1 git@github.company.example:AI/viz-dec.git "$HOME/visual-decider-install" && bash "$HOME/visual-decider-install/install.sh" --agents both
 ```
 
 The installer registers a durable local marketplace copied from the approved source. Runtime paths do not depend on the checkout, and auto-refresh does not silently select a newer GitHub release. Remove the temporary checkout after successful installation if desired. Updates require running the approved version's installer. IT can deploy this same command using an existing endpoint-management system.
+
+If marketplace registration is unavailable, add `--integration skill` to install the personal skill using CLI access, `--integration skill-mcp` for that skill plus direct MCP, or `--integration mcp` for direct MCP alone. These modes use no marketplace registration and install the same locked runtime and selected model. They still obey managed agent policies. The installer links managed skills into `~/.agents/skills` (Codex) and `~/.claude/skills` (Claude Code), with directory overrides for managed deployments. Neither staff nor IT needs to manually copy SKILL.md. The shared launcher binds custom installation paths and preserves argument boundaries.
+
+Integration mode is remembered per agent. Switching retires this package's user plugin/direct MCP/skill as applicable; unrelated same-name configuration is refused and project-scoped conflicts need explicit project cleanup. Restart existing agent sessions after switching. Repeated registration uses one MCP name per agent, not new numbered servers.
 
 Do not embed credentials in URLs, manifests, shell arguments, lockfiles, or configuration. Use Git/Hugging Face authentication helpers or managed environment injection. The installer does not serialize `HF_TOKEN` or Git tokens. Review the contents of internal logs under your usual retention policy.
 
@@ -42,7 +46,9 @@ The core and MLX backend do not import Codex or Claude libraries. A single MCP i
 
 The default plugin has no TCP listener or login service. Agent sessions share one lazy model per installation through an owner-only Unix socket. The engine exits after five idle minutes; active jobs prevent termination. Runtime sockets/locks/logs live in an owner-only `/tmp/visual-decider-UID-HASH` directory. Separate installation homes, direct Python engines, `--in-process`, and manually started HTTP servers can still load separate models. Restart pre-0.3.0 agent sessions after upgrading to release their old private models. Optional HTTP must remain loopback-only and is intended for a trusted single-user machine; it does not provide tenant isolation or authentication.
 
-The installer selects E2B 4-bit for 8–15 GiB, E4B 4-bit for 16–31 GiB, and E4B BF16 for 32+ GiB. For corporate approval, specify an approved model ID plus `--revision`, or a pre-provisioned local snapshot with `--model`. Explicit choices survive upgrades; `--model auto` opts back into hardware selection. The legacy default is migrated automatically, while legacy custom snapshots are preserved. Repeated installation validates/reuses cached required files and registers the same plugin name; it does not load weights or start extra engines. Concurrent installers for one installation are rejected by a lock.
+The installer selects E2B 4-bit for 8–15 GiB, E4B 4-bit for 16–31 GiB, and E4B BF16 for 32+ GiB. For corporate approval, specify an approved model ID plus `--revision`, or a pre-provisioned local snapshot with `--model`. Explicit choices survive upgrades; `--model auto` opts back into hardware selection. The legacy default is migrated automatically, while legacy custom snapshots are preserved. Repeated installation validates/reuses cached required files and registers the same integration name; it does not load weights unless `--check-model` is requested. Concurrent installers for one installation are rejected by a lock.
+
+Use `INSTALL_HOME/bin/visual-decider-health` for offline staged diagnostics and a synthetic vision/scoring test through the shared model. Failed checks produce JSON and exit 1. `--no-inference` is suitable for provisioning checks that must not load GPU weights, but only reports preflight readiness. Neither check downloads weights or uploads media. The synthetic test is not task-specific acceptance testing or cryptographic model attestation.
 
 ## Updates, rollback, and removal
 
@@ -58,5 +64,7 @@ claude plugin marketplace remove visual-decider
 ```
 
 After all sessions have stopped, delete only the visual-decider installation directory if no longer needed. Shared Hugging Face caches are intentionally retained. Legacy manually installed `visual-decider` MCP registrations and skill directories should be removed after verifying the plugin, to prevent duplicate tools or conflicting instructions; the installer does not delete unrelated user configuration.
+
+For standalone modes, remove direct servers with `codex mcp remove visual-decider` or `claude mcp remove visual-decider --scope user`, and remove only the managed `visual-decider` symlink from the agent's personal skill directory. Stable `INSTALL_HOME/bin` launchers update on upgrades; shell PATH and directly registered MCP executables do not need version edits.
 
 Reference: [Codex plugins](https://developers.openai.com/plugins/build/plugins), [Claude Code plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces), [Claude plugin reference](https://code.claude.com/docs/en/plugins-reference).

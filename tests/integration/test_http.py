@@ -58,6 +58,24 @@ def test_no_remote_client():
         Client("http://127.0.0.1.evil.example")
 
 
+def test_model_health_uses_the_http_worker():
+    calls = []
+
+    class Engine:
+        def info(self):
+            return {"model": "test"}
+
+        def model_health(self):
+            calls.append(1)
+            return {"status": "ok"}
+
+    with TestClient(create_app(analyzer_factory=Engine), base_url="http://127.0.0.1") as client:
+        assert not calls
+        assert client.post("/model_health", json={}).json() == {"status": "ok"}
+        assert calls == [1]
+        assert client.post("/model_health", json={"path": "unexpected"}).status_code == 422
+
+
 def test_backend_failure_is_explicit(tmp_path):
     class Broken(Backend):
         def score(self, *args):

@@ -25,6 +25,8 @@ class EngineWorker:
             self._engine = self._factory()
         if operation == "health":
             return self._engine.info()
+        if operation == "model_health":
+            return self._engine.model_health()
         if operation not in {"classify_image", "inspect_image", "analyze_video", "analyze_batch"}:
             raise ValueError("Unknown engine operation")
         args = dict(payload)

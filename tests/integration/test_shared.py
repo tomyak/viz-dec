@@ -48,6 +48,8 @@ class Engine:
             (a.home / "busy").touch()
             time.sleep(1)
         return {"winner": "Yes", "pid": os.getpid()}
+    def model_health(self):
+        return {"status": "ok", "pid": os.getpid()}
 serve(a.home, json.loads(a.config), lock_fd=a.lock_fd, factory=Engine, idle_seconds=2)
 """)
     original = subprocess.Popen
@@ -83,6 +85,8 @@ def test_simultaneous_start_loads_one_model_and_reuses_it(client):
     assert (client.home / "loads").read_text().splitlines() == [str(next(iter(pids)))]
     assert client.call("classify_image", **PAYLOAD)["pid"] in pids
     assert client.status()["loaded"]
+    assert client.call("model_health")["pid"] in pids
+    assert len((client.home / "loads").read_text().splitlines()) == 1
 
 
 def test_crash_recovers_without_stale_lock_or_socket(client):

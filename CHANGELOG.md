@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2026-09-24
+
+- Add standalone skill, skill plus MCP, and direct MCP installation for Claude Code and Codex, without marketplace registration or manual skill copying. Preserve the selected integration per agent on repeat installs.
+- Add stable, installation-bound launchers under `bin/`, including correctly quoted MCP registration for paths with spaces. Mode switches retire this package's old user integration and protect unrelated skills/MCP commands.
+- Make the shared skill work through either MCP or CLI, including efficient multi-question batches. Publish a standalone skill archive alongside the native plugin archive.
+- Add offline `visual-decider-health` diagnostics for configuration, cached model files, shared service, and fresh synthetic vision/scoring. Expose `model_health` through MCP and HTTP; checks share the existing model and queue.
+- Add optional installer `--check-model`; ordinary installation still does not load weights. `--no-inference` offers a nonloading preflight check.
+
 ## 0.3.0 — 2026-09-24
 
 - Select pinned Gemma models from physical memory: E2B 4-bit on 8–15 GiB, E4B 4-bit on 16–31 GiB, and E4B BF16 on 32+ GiB. Preserve explicit model choices and support `--model auto`.

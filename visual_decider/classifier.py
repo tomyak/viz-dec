@@ -169,3 +169,33 @@ class Analyzer:
     def info(self):
         with self.lock:
             return {**self.backend.info(), "cache": self.cache.info(), "local_only": True}
+
+    def model_health(self):
+        """Exercise fresh vision encoding and scoring without user files or cache hits."""
+        from PIL import Image
+
+        start = time.perf_counter()
+        checks = []
+        with self.lock:
+            for expected, color in (("Red", (255, 0, 0)), ("Blue", (0, 0, 255))):
+                state, _ = self.backend.encode(Image.new("RGB", (256, 256), color))
+                decision = self._decide(
+                    state,
+                    "What is the dominant color in this image?",
+                    ["Red", "Green", "Blue"],
+                    "label_permute",
+                    DecisionPolicy(),
+                    False,
+                )
+                checks.append({"expected": expected, "decision": decision})
+            ok = all(
+                check["decision"]["winner"] == check["expected"] and check["decision"]["stable"]
+                for check in checks
+            )
+            return {
+                "status": "ok" if ok else "error",
+                "checks": checks,
+                "model": self.info(),
+                "latency_ms": 1000 * (time.perf_counter() - start),
+                "scope": "Synthetic vision/scoring smoke test; not task accuracy certification.",
+            }

@@ -5,6 +5,10 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class HealthRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
 class Question(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     question: str = Field(min_length=1, max_length=4096)

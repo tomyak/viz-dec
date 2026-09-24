@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import os
+import sys
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -51,9 +52,12 @@ async def main():
                 f"Two concurrent installed MCP clients share model PID {pid} and visual cache",
                 flush=True,
             )
-            package_version = json.loads((home / "installation.json").read_text())["version"]
+            helper = (
+                home / "marketplace/plugins/visual-decider/skills/visual-decider/scripts/run.py"
+            )
             process = await asyncio.create_subprocess_exec(
-                str(home / "versions" / package_version / "bin/visual-decide"),
+                sys.executable,
+                str(helper),
                 "image",
                 payload["path"],
                 payload["question"],
@@ -65,7 +69,23 @@ async def main():
             assert process.returncode == 0
             assert json.loads(output)["cache_hit"]
             assert client.status()["pid"] == pid
-            print("Installed CLI reused the same model PID and visual cache", flush=True)
+            print("Installed skill CLI reused the same model PID and visual cache", flush=True)
+            health = await sessions[0].call_tool("model_health", {})
+            assert not health.is_error, health
+            assert health.structured_content["status"] == "ok"
+            process = await asyncio.create_subprocess_exec(
+                str(home / "bin/visual-decider-health"),
+                stdout=asyncio.subprocess.PIPE,
+            )
+            output, _ = await process.communicate()
+            assert process.returncode == 0
+            report = json.loads(output)
+            assert report["status"] == "ok" and report["service"]["pid"] == pid
+            assert (
+                report["checks"][-1]["model"]["vision_encodes"]
+                == health.structured_content["model"]["vision_encodes"] + 2
+            )
+            print("MCP and CLI health freshly encoded images on the same model PID", flush=True)
         assert client.status()["pid"] == pid
         print("Agent disconnects retained the single shared engine until idle shutdown", flush=True)
     finally:

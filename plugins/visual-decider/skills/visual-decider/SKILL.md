@@ -3,7 +3,11 @@ name: visual-decider
 description: Use local finite-choice image and sampled-video decisions for explicit visual questions, UI state checks, repeated screenshots, and regression triage. Use when the user requests visual-decider or a few explicit alternatives can answer the question.
 ---
 
-Use the visual-decider MCP tools to score local visual evidence with Gemma.
+Use visual-decider to score local visual evidence with Gemma. If its MCP tools are
+available, use them. Otherwise use the installed CLI through this skill's
+`scripts/run.py`; read [CLI access](references/cli.md) for exact commands and batch
+manifests. Both routes share one runtime and produce the same decision schema.
+Do not retry a failed inference through another route: it may already have run.
 
 1. Pass the actual absolute path from the attachment or screenshot. Files can be anywhere under the configured roots; the fixture folder has no special role. If an attachment lacks a local path, obtain it using the host's file tools. Never invent a path.
 2. Preserve the user's exact question and supplied choices. For a yes/no question without choices, use `["Yes", "No"]`. Do not replace “Did the patient fall?” with a posture classification, or broaden/narrow the alternatives silently. If clarification is essential, ask before changing the task.
@@ -14,4 +18,4 @@ Use the visual-decider MCP tools to score local visual evidence with Gemma.
 
 If you test alternative wording or choices, label it as a separate experiment and report disagreement with the original test. Do not select the result that merely seems preferable. If detailed explanation, exact OCR, geometry, or verification is needed, inspect the original using an appropriate tool consistent with the user's privacy requirements. Distinguish your observation from the local model's output. The engine never sends images to a cloud model, but the hosting agent receives its structured results.
 
-Agent sessions share one model process per installation. It starts on the first visual request and exits after five idle minutes; active work prevents shutdown. No manual server startup or login service is required. Several lightweight MCP adapters are normal and do not each load weights. Use `visual-decider-service status` to inspect the shared engine. The installer chooses a model for physical memory, downloads missing weights, and reuses existing installations; `--model` overrides its choice. If a tool fails, report the error; do not invent an answer or silently change providers. Follow the repository README for installation or access-root changes, never copy this skill manually.
+Agent sessions share one model process per installation. It starts on the first visual request and exits after five idle minutes; active work prevents shutdown. No manual server startup or login service is required. Several lightweight MCP adapters are normal and do not each load weights. Use `model_health` to diagnose actual model inference, or the CLI health command for staged installation diagnostics; this synthetic smoke test does not certify task accuracy. Use the CLI `service status` command to inspect the process without loading it. The installer chooses a model for physical memory, downloads missing weights, and installs/updates skills automatically; `--model` overrides its choice. If a tool fails, report the error; do not invent an answer or silently change providers. Follow the repository README for installation or access-root changes.

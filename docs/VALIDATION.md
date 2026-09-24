@@ -2,6 +2,15 @@
 
 Local hardware: Apple M3 Max, 128 GiB RAM.
 
+## 0.4.0 skill and model-health validation
+
+- Unit/integration suite: **87 passed**, 11 opt-in model tests skipped. Added standalone mode migration/repetition, remembered agent modes/directories, unrelated-config protection, leading-space legacy MCP repair, stable launcher quoting, health failure stages/nonloading preflight, fresh visual encoding, and MCP/HTTP health dispatch. Migration regressions cover Codex reporting plugin servers through `mcp get` and Claude returning a nonzero exit for an already-enabled plugin.
+- A fresh offline installation registered standalone skills for both real Codex and Claude Code CLIs in isolated user configuration directories. Switching to `skill-mcp` and repeating installation retained one named MCP entry per agent with the exact stable executable path; Claude reported connected. Tests did not modify unrelated integrations.
+- The installed skill launcher, two concurrent installed MCP clients, and both MCP/CLI model health checks reused **one E4B 4-bit process and visual cache**. Health checks incremented vision encoding counts by two every time, bypassing cached synthetic results. Reproduce with `benchmarks/shared_smoke.py --home /path/to/isolated/install`.
+- Real health checks passed on **E2B 4-bit, E4B 4-bit, and E4B BF16**, with correct red/blue winners and full choice-rotation agreement. These are functional smoke tests on this machine, not measurements on an actual 18 GiB Mac or task-accuracy certification. Test services were stopped afterward.
+- A concurrent-start regression exposed the Unix listener's default five-connection backlog. Increasing it to 32 passed **12 consecutive eight-client startup runs**; inference queue and active connection limits remain bounded.
+- Plugin and skill validators passed. Release packaging includes separate plugin and standalone skill ZIPs; neither contains models or machine-specific runtime bindings.
+
 ## 0.3.0 model selection and shared-process validation
 
 - Unit/integration suite: **75 passed**, 11 opt-in model tests skipped. Includes memory tier boundaries, automatic/explicit selection and legacy migration, concurrent installer rejection, unchanged settings on repeat install, and real child-process/socket tests for concurrent startup, lazy loading, reuse, crash recovery, configuration replacement, busy-service protection, idle shutdown, and invalid requests.

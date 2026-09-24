@@ -22,13 +22,14 @@ from importlib.metadata import version
 from pathlib import Path
 
 from ..runtime import EngineWorker
-from .contracts import BatchRequest, ClassifyRequest, InspectRequest, VideoRequest
+from .contracts import BatchRequest, ClassifyRequest, HealthRequest, InspectRequest, VideoRequest
 from .settings import installation_home, load_settings
 
 IDLE_SECONDS = 300
 MAX_REQUEST = 1024 * 1024
 MAX_RESPONSE = 64 * 1024 * 1024
 CONTRACTS = {
+    "model_health": HealthRequest,
     "classify_image": ClassifyRequest,
     "inspect_image": InspectRequest,
     "analyze_video": VideoRequest,
@@ -189,6 +190,9 @@ class Handler(socketserver.StreamRequestHandler):
 
 class SharedServer(socketserver.ThreadingUnixStreamServer):
     daemon_threads = False
+    # Concurrent clients perform discovery immediately before submitting work.
+    # The socketserver default backlog of five can refuse that startup burst.
+    request_queue_size = 32
 
     def __init__(self, path, config, *, factory=None, idle_seconds=IDLE_SECONDS):
         self.config, self.identity = config, fingerprint(config)

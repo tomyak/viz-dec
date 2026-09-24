@@ -10,7 +10,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse
 
 from ..runtime import EngineWorker, QueueFullError
-from .contracts import BatchRequest, ClassifyRequest, InspectRequest, VideoRequest
+from .contracts import BatchRequest, ClassifyRequest, HealthRequest, InspectRequest, VideoRequest
 
 
 class BodyLimit:
@@ -91,6 +91,10 @@ def create_app(model=None, roots=None, analyzer_factory=None):
     @app.post("/classify_image")
     async def classify_image(request: ClassifyRequest):
         return await submit("classify_image", request)
+
+    @app.post("/model_health")
+    async def model_health(request: HealthRequest):
+        return await submit("model_health", request)
 
     @app.post("/inspect_image")
     async def inspect_image(request: InspectRequest):

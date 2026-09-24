@@ -10,7 +10,13 @@ The default stdio MCP and CLI adapters connect to `adapters/shared.py`. Discover
 
 The shared process exits after five idle minutes; active jobs prevent idle termination. Status does not load the model or extend its lifetime. Model/roots/version changes replace an idle process only after it exits; a busy process refuses replacement. Accepted inference is never automatically replayed after a disconnect. Existing older sessions must be restarted after upgrading; `--in-process`, direct Python, and manual HTTP are deliberate separate-model modes. Optional HTTP warms its worker at startup, serves startup metadata at `/health` without blocking behind jobs, and accepts CLI/MCP clients over loopback. There is no LaunchAgent, login service, remote inference, or provider fallback.
 
-The installer uses physical memory for repeatable model selection, retains explicit choices, downloads only required files at pinned revisions, and records selection provenance separately from runtime configuration. Its own lock prevents overlapping installations. It never starts a model process.
+The installer uses physical memory for repeatable model selection, retains explicit choices, downloads only required files at pinned revisions, and records selection provenance separately from runtime configuration. Its own lock prevents overlapping installations. It starts no model unless the caller requests `--check-model`.
+
+## Skills and model health
+
+The installer supports native plugins, standalone skills, skills with direct MCP, and direct MCP alone. Integration choices live in installation metadata, outside the core. Personal skill folders link to a durable versioned copy with a local runtime binding. Its standard-library launcher forwards an argument list to stable, installation-bound shell launchers; it imports no inference engine. CLI, skill, and MCP all use the same shared lifecycle. Mode switches retire this package's previous user integration and refuse unrelated same-name registrations. Old environment versions remain for sessions to finish; stable launchers point new sessions at the selected release.
+
+`Analyzer.model_health()` generates red and blue RGB inputs in memory, freshly encodes each, and checks expected winners and choice-rotation consistency. It bypasses visual caches, never reads user files, and remains independent of transports. MCP `model_health` and HTTP `POST /model_health` run it through their existing serialized worker. The standalone health adapter first validates settings and cached snapshot files, then verifies shared service startup and inference, reporting distinct error stages. `--no-inference` reports `preflight_ok`, skips model startup and cannot establish inference health. No health path downloads weights, certifies real-world accuracy, or starts a second private model.
 
 ## Scoring
 

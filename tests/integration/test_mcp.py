@@ -17,6 +17,7 @@ def test_mcp_schema_and_dispatch():
             "inspect_image",
             "analyze_video",
             "analyze_batch",
+            "model_health",
         }
         result = await server.call_tool(
             "classify_image", {"path": "x.png", "question": "Visible?", "choices": ["Yes", "No"]}
@@ -24,6 +25,9 @@ def test_mcp_schema_and_dispatch():
         assert result.structured_content["winner"] == "Yes"
         assert not result.is_error
         assert all(x.output_schema for x in tools)
+        health = await server.call_tool("model_health", {})
+        assert health.structured_content["tool"] == "model_health"
+        assert health.structured_content["payload"] == {}
 
     asyncio.run(run())
 
