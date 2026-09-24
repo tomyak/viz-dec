@@ -1,4 +1,4 @@
-"""Command-line adapter for direct local execution or a resident HTTP service."""
+"""Command-line adapter using the installation's shared model by default."""
 
 import argparse
 import json
@@ -13,6 +13,9 @@ def main():
     parser.add_argument("--url", help="Optional already-running loopback HTTP service")
     parser.add_argument("--model")
     parser.add_argument("--root", action="append")
+    parser.add_argument(
+        "--in-process", action="store_true", help="Load a separate model for this command"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("image", "video"):
         command = sub.add_parser(name)
@@ -87,11 +90,15 @@ def main():
             from .client import Client
 
             target = Client(args.url)
-        else:
+        elif args.in_process:
             settings = load_settings()
             worker = target = EngineWorker(
                 args.model or settings.get("model"), roots=args.root or settings["roots"]
             )
+        else:
+            from .shared import SharedClient
+
+            target = SharedClient(model=args.model, roots=args.root)
         print(json.dumps(target.call(operation, **payload), indent=2, allow_nan=False))
     except (OSError, RuntimeError, ValueError, KeyError) as exc:
         parser.exit(1, f"{exc}\n")

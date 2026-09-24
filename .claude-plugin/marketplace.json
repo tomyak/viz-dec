@@ -8,7 +8,7 @@
       "name": "visual-decider",
       "source": "./plugins/visual-decider",
       "description": "Local finite-choice image and sampled-video decisions using Gemma and MLX.",
-      "version": "0.2.1"
+      "version": "0.3.0"
     }
   ]
 }

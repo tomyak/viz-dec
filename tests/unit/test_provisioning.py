@@ -61,6 +61,9 @@ def test_model_download_and_cached_reuse(tmp_path, monkeypatch):
     calls.clear()
     assert ensure_model(download=True) == path
     assert len(calls) == 1 and calls[0]["local_files_only"]
+    # New Hugging Face versions require allow_patterns on offline lookup too;
+    # otherwise deliberately excluded README files make the cache "incomplete".
+    assert calls[0]["allow_patterns"] == ["*.json", "*.jinja", "*.model", "*.safetensors", "*.txt"]
 
 
 def test_missing_model_inference_never_downloads(monkeypatch):

@@ -1,4 +1,4 @@
-"""Agent-neutral stdio MCP adapter. Owns its engine unless --url selects shared HTTP."""
+"""Agent-neutral stdio MCP adapter. Defaults to the installation's shared model process."""
 
 import argparse
 from contextlib import asynccontextmanager
@@ -124,16 +124,23 @@ def main():
     parser.add_argument("--url", help="Use an already-running loopback HTTP service instead")
     parser.add_argument("--model")
     parser.add_argument("--root", action="append")
+    parser.add_argument(
+        "--in-process", action="store_true", help="Load a separate model in this process"
+    )
     args = parser.parse_args()
     settings = load_settings()
     if args.url:
         from .client import Client
 
         server = create_server(Client(args.url))
-    else:
+    elif args.in_process:
         server = create_server(
             model=args.model or settings.get("model"), roots=args.root or settings["roots"]
         )
+    else:
+        from .shared import SharedClient
+
+        server = create_server(SharedClient(model=args.model, roots=args.root))
     server.run()
 
 

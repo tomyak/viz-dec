@@ -11,8 +11,8 @@ def installation_home():
     ).expanduser()
 
 
-def load_settings():
-    path = installation_home() / "config.json"
+def load_settings(home=None):
+    path = (Path(home) if home is not None else installation_home()) / "config.json"
     settings = json.loads(path.read_text()) if path.exists() else {}
     if not isinstance(settings, dict) or set(settings) - {"model", "roots"}:
         raise ValueError("Invalid visual-decider config.json")

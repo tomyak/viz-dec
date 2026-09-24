@@ -10,6 +10,8 @@ from pathlib import Path
 DEFAULT_MODEL = "google/gemma-4-E4B-it"
 PINNED_REVISIONS = {
     DEFAULT_MODEL: "ee0ef6023621cff504d758262d4e04895a5af4a2",
+    "mlx-community/gemma-4-e4b-it-4bit": "475b9088d29754a3379866cf5aeb6b41acd313c2",
+    "mlx-community/gemma-4-e2b-it-4bit": "238767527555cb75a05732a84dff5d6ba0dd6809",
     "mlx-community/gemma-4-26B-A4B-it-4bit": "0d77464eeb233a2da68ebf9d7dc4edaac7db956d",
 }
 
@@ -66,7 +68,11 @@ def ensure_model(model=DEFAULT_MODEL, *, revision=None, download=False) -> Path:
     from huggingface_hub.errors import LocalEntryNotFoundError
 
     revision = revision or PINNED_REVISIONS.get(model)
-    options = dict(repo_id=model, revision=revision)
+    options = dict(
+        repo_id=model,
+        revision=revision,
+        allow_patterns=["*.json", "*.jinja", "*.model", "*.safetensors", "*.txt"],
+    )
     try:
         return validate_snapshot(snapshot_download(**options, local_files_only=True))
     except (LocalEntryNotFoundError, FileNotFoundError, ValueError, KeyError):
@@ -83,7 +89,6 @@ def ensure_model(model=DEFAULT_MODEL, *, revision=None, download=False) -> Path:
         path = snapshot_download(
             **options,
             local_files_only=False,
-            allow_patterns=["*.json", "*.jinja", "*.model", "*.safetensors", "*.txt"],
         )
     except Exception as exc:
         raise RuntimeError(

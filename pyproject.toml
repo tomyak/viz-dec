@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "visual-decider"
-version = "0.2.1"
+version = "0.3.0"
 description = "Local finite-choice image and sampled-video decisions with Gemma and MLX"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -24,6 +24,7 @@ visual-decide = "visual_decider.adapters.cli:main"
 visual-decider-http = "visual_decider.adapters.http:main"
 visual-decider-mcp = "visual_decider.adapters.mcp_server:main"
 visual-decider-model = "visual_decider.models.download:main"
+visual-decider-service = "visual_decider.adapters.shared:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["visual_decider"]

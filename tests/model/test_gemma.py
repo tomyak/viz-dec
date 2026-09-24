@@ -55,6 +55,8 @@ def test_candidate_cache_matches_full_forward(analyzer):
     inputs = backend.inputs(state, prompt)
     n = inputs["input_ids"].shape[1]
     expected = []
+    lengths = []
+    independent = []
     for choice in choices:
         ids = continuation_ids(backend.tokenizer, prompt, choice) + [
             backend.tokenizer.convert_tokens_to_ids("<turn|>")
@@ -69,5 +71,26 @@ def test_candidate_cache_matches_full_forward(analyzer):
             logits[n - 1 + i, t] - mx.logsumexp(logits[n - 1 + i]) for i, t in enumerate(ids)
         )
         expected.append(total.item())
-    # BF16 batched and incremental paths can differ slightly.
-    assert raw == pytest.approx(expected, abs=0.25)
+        lengths.append(len(ids))
+        # A separately prefetched KV cache per candidate must match the shared
+        # prefill/branch implementation without any batch-shape tolerance.
+        cache = backend.model.language_model.make_cache()
+        current = (
+            backend.model(**inputs, cache=cache, logits_to_keep=1).logits[0, -1].astype(mx.float32)
+        )
+        score = mx.array(0.0)
+        for i, token in enumerate(ids):
+            score += current[token] - mx.logsumexp(current)
+            if i + 1 < len(ids):
+                current = (
+                    backend.model(mx.array([[token]]), cache=cache, logits_to_keep=1)
+                    .logits[0, -1]
+                    .astype(mx.float32)
+                )
+        independent.append(score.item())
+    assert raw == pytest.approx(independent, abs=1e-4)
+    # Quantized BF16 matmul kernels differ between batched and incremental paths.
+    # Bound the average per-token discrepancy as sequences vary in length.
+    assert [x / n for x, n in zip(raw, lengths)] == pytest.approx(
+        [x / n for x, n in zip(expected, lengths)], abs=0.25
+    )

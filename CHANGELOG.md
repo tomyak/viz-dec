@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-09-24
+
+- Select pinned Gemma models from physical memory: E2B 4-bit on 8–15 GiB, E4B 4-bit on 16–31 GiB, and E4B BF16 on 32+ GiB. Preserve explicit model choices and support `--model auto`.
+- Share one on-demand model per installation across MCP and CLI sessions, with a process lifetime lock, crash recovery, serialized inference, private Unix socket, and five-minute idle shutdown. No login service is installed.
+- Add `visual-decider-service status` and `stop`; retain deliberate `--in-process` and manual HTTP modes.
+- Make repeat installs reuse unchanged configuration and cached models, record selection intent, and reject concurrent installers for the same installation.
+- Fix cached provisioning to validate the same required-file patterns used during download.
+- Restart existing 0.2.x agent sessions once after upgrading to release their private models.
+
 ## 0.2.1 — 2026-09-24
 
 - Bind the installed MCP launcher to its installation directory explicitly, supporting custom paths even when agent hosts filter inherited environment variables.

@@ -1,6 +1,7 @@
 """Install the locked engine and register real agent plugins; never copy user skills."""
 
 import argparse
+import fcntl
 import json
 import os
 import platform
@@ -9,6 +10,54 @@ import subprocess
 import tempfile
 import tomllib
 from pathlib import Path
+
+GIB = 1024**3
+BF16_MODEL = "google/gemma-4-E4B-it"
+SMALL_MODEL = "mlx-community/gemma-4-e2b-it-4bit"
+MEDIUM_MODEL = "mlx-community/gemma-4-e4b-it-4bit"
+
+
+def physical_memory():
+    try:
+        result = subprocess.run(
+            ["/usr/sbin/sysctl", "-n", "hw.memsize"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        memory = int(result.stdout.strip())
+        if memory <= 0:
+            raise ValueError("Nonpositive memory size")
+        return memory
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise ValueError("Cannot detect physical memory; specify --model explicitly") from exc
+
+
+def select_model(request, previous, selection):
+    """Preserve explicit choices; automatic choices adapt to physical, not free, RAM."""
+    if request and request != "auto":
+        return request, {"mode": "explicit"}
+    if request is None and previous.get("model"):
+        if selection.get("mode") == "explicit":
+            return previous["model"], selection
+        if not selection:
+            # Older installers did not record intent. Only migrate the old default;
+            # preserve custom models/snapshots whose provenance cannot be established.
+            old = previous["model"]
+            parts = Path(old).parts
+            legacy_default = old == BF16_MODEL or (
+                "models--google--gemma-4-E4B-it" in parts and "snapshots" in parts
+            )
+            if not legacy_default:
+                return old, {"mode": "explicit"}
+    memory = physical_memory()
+    if memory < 8 * GIB:
+        raise ValueError("Automatic selection requires at least 8 GiB RAM; use --model to override")
+    model = (
+        BF16_MODEL if memory >= 32 * GIB else MEDIUM_MODEL if memory >= 16 * GIB else SMALL_MODEL
+    )
+    return model, {"mode": "auto", "memory_bytes": memory, "model_id": model}
 
 
 def run(args, **kwargs):
@@ -35,25 +84,53 @@ def selected_agents(request):
 
 def write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
+    content = json.dumps(value, indent=2) + "\n"
+    if path.exists() and path.read_text() == content:
+        return
     temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(value, indent=2) + "\n")
+    temporary.write_text(content)
     temporary.replace(path)
 
 
 def install(args):
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise ValueError("The bundled MLX backend requires Apple Silicon macOS")
-    source = args.source.resolve()
-    version = tomllib.loads((source / "pyproject.toml").read_text())["project"]["version"]
-    agents = selected_agents(args.agents)
     home = (
         Path(os.environ.get("VISUAL_DECIDER_HOME", "~/.local/share/visual-decider"))
         .expanduser()
         .resolve()
     )
+    home.mkdir(parents=True, exist_ok=True)
+    with (home / "install.lock").open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError(
+                "Another installer is running for this installation; retry when it finishes"
+            ) from None
+        install_locked(args, home)
+
+
+def install_locked(args, home):
+    source = args.source.resolve()
+    version = tomllib.loads((source / "pyproject.toml").read_text())["project"]["version"]
+    agents = selected_agents(args.agents)
     settings_path = home / "config.json"
     previous = json.loads(settings_path.read_text()) if settings_path.exists() else {}
-    model = args.model or previous.get("model", "google/gemma-4-E4B-it")
+    state_path = home / "installation.json"
+    state = json.loads(state_path.read_text()) if state_path.exists() else {}
+    selection = (
+        state.get("model_selection", {}) if state.get("model") == previous.get("model") else {}
+    )
+    model, selection = select_model(args.model, previous, selection)
+    if args.revision and (not args.model or args.model == "auto"):
+        raise ValueError("--revision requires an explicit --model Hugging Face ID")
+    reason = (
+        f"{selection['memory_bytes'] / GIB:g} GiB physical RAM"
+        if selection["mode"] == "auto"
+        else "explicit selection"
+    )
+    print(f"Model: {model} ({reason})", flush=True)
     roots = args.allow_root or previous.get("roots", [str(Path.home())])
     if not roots or any(not Path(root).expanduser().is_absolute() for root in roots):
         raise ValueError("--allow-root values must be absolute paths")
@@ -106,6 +183,7 @@ def install(args):
                 shutil.rmtree(market / folder)
             shutil.move(stage / folder, market / folder)
     write_json(settings_path, {"model": snapshot, "roots": roots})
+    write_json(state_path, {"version": version, "model": snapshot, "model_selection": selection})
     for agent in agents:
         run([agent, "plugin", "marketplace", "add", market])
         if agent == "codex":
@@ -136,7 +214,8 @@ def install(args):
     print(
         f"Installed visual-decider {version} at {target}\nModel: {snapshot}\nAllowed roots: {roots}"
     )
-    print("Start a fresh agent session to discover the plugin. No login service was installed.")
+    print("Restart existing agent sessions once after upgrading. No login service was installed.")
+    print("Agent sessions share one model per installation; it stops after 5 idle minutes.")
     print(f"CLI: {target}/bin/visual-decide")
 
 
@@ -147,7 +226,9 @@ def main():
     parser.add_argument(
         "--agents", choices=["auto", "both", "codex", "claude", "none"], default="auto"
     )
-    parser.add_argument("--model", help="Hugging Face ID or pre-provisioned snapshot path")
+    parser.add_argument(
+        "--model", help="Hugging Face ID, local snapshot, or auto to reselect for this Mac"
+    )
     parser.add_argument("--revision", help="Model revision; known models default to pinned commits")
     parser.add_argument(
         "--allow-root", action="append", help="Readable media root (repeatable); default home"

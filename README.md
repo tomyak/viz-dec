@@ -6,18 +6,27 @@ Local finite-choice image and video decisions for **Codex, Claude Code, Python, 
 
 ## Install
 
-Prerequisites: Apple Silicon macOS, Git, Python 3, and the CLI for the agent you use. Allow sufficient disk space and memory for the selected model; the default E4B backend measured approximately 17 GB peak MLX allocation on an M3 Max. The installer provisions Python 3.12 with uv if needed.
+Prerequisites: Apple Silicon macOS, at least 8 GiB of unified memory, Git, Python 3, and the CLI for the agent you use. The installer detects physical memory and selects a model, then provisions Python 3.12 with uv if needed.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.2.1/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.3.0/install.sh | bash
 ```
 
 This one command:
 
-- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.2.1`.
+- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.3.0`.
+- Chooses a model for the Mac's memory, printing the selection before downloading anything.
 - Reuses complete cached Gemma weights or downloads missing weights from Hugging Face. Known models use pinned commit revisions.
 - Registers the plugin with every detected supported agent, including MCP configuration and its skill. **No manual SKILL.md copying.**
-- Uses your home directory as the default media access root. Opens no listening port and installs no login service.
+- Uses your home directory as the default media access root. Shares one on-demand model between agent sessions over an owner-only Unix socket; opens no TCP port and installs no login service.
+
+| Physical memory | Automatic model |
+|---|---|
+| 8–15 GiB | `mlx-community/gemma-4-e2b-it-4bit` |
+| 16–31 GiB (including 18 GiB Macs) | `mlx-community/gemma-4-e4b-it-4bit` |
+| 32 GiB or more | `google/gemma-4-E4B-it` (BF16) |
+
+These are selection tiers, not measured peak-memory guarantees. macOS, other apps, image sizes, and request sizes still affect available memory. Quantization and the smaller E2B model can change answers. Below 8 GiB, or if memory detection fails, automatic selection stops with an explicit error; an administrator can still choose `--model`. Selection uses physical memory rather than fluctuating free memory so reruns are repeatable.
 
 For gated Google weights, accept access on the [model page](https://huggingface.co/google/gemma-4-E4B-it) and authenticate with `hf auth login` or `HF_TOKEN` before installing. The installer reports an actionable error if access is unavailable. The MIT code license does not license the model weights.
 
@@ -29,11 +38,32 @@ bash install.sh --agents both --allow-root /path/to/media
 bash install.sh --agents codex --model mlx-community/gemma-4-26B-A4B-it-4bit
 bash install.sh --agents claude --allow-root /  # all media readable by your account
 bash install.sh --agents none                # engine and CLI only
+bash install.sh --model auto                 # reselect automatically, overriding a previous choice
 ```
 
-Roots can be repeated. Existing settings are retained unless explicitly overridden. Configuration is in `~/.local/share/visual-decider/config.json`; it stores a local model path and allowed roots, never credentials. Set `VISUAL_DECIDER_HOME` when running the installer to relocate it. The installed MCP launcher records that location explicitly; use the same variable for direct CLI commands.
+Roots can be repeated. Existing roots and explicit model choices are retained unless overridden. Automatic selections are reevaluated on install; an older installation using the original Google E4B default migrates to the appropriate tier. Older custom snapshots are preserved. `--model auto` deliberately resets an explicit choice. Configuration is in `~/.local/share/visual-decider/config.json`; selection provenance is in `installation.json`. Neither contains credentials. Set `VISUAL_DECIDER_HOME` when running the installer to relocate it. The installed MCP launcher records that location explicitly; use the same variable for direct CLI commands.
 
-Start a fresh Codex or Claude Code session after installation. The stdio MCP process initializes quickly, loads Gemma on the first tool call, and retains it for that process's lifetime. Closing the agent releases its process. Separate agents may load separate model instances; optional shared HTTP mode is documented below.
+Rerunning the installer reuses the versioned environment, complete cached model, settings, and named plugin registrations. A per-installation lock prevents concurrent installers from modifying the same setup. Installation validates model files without loading a model or starting a server.
+
+**Restart existing Codex/Claude Code sessions once after upgrading from 0.2.x** to release their old private models and pick up the new MCP adapter. New agent sessions and CLI calls share one model per installation. Simultaneous first requests are protected by a process lifetime lock. The model starts on the first visual request, survives individual agent exits, and shuts down after five minutes with no active requests. Later use restarts it. A crash releases the lock automatically. Model/configuration changes replace an idle service only after the previous process exits; a busy service asks the caller to retry. `--in-process` and manually started HTTP/Python engines are explicit opt-outs and can load additional copies.
+
+To inspect or stop the shared engine (neither command starts a model):
+
+```bash
+~/.local/share/visual-decider/versions/0.3.0/bin/visual-decider-service status
+~/.local/share/visual-decider/versions/0.3.0/bin/visual-decider-service stop
+```
+
+`status` reports the PID, model, loaded state, and active request count. `stop` refuses to interrupt active work. Several lightweight MCP adapter processes are normal; only the shared engine loads weights. Different `VISUAL_DECIDER_HOME` directories intentionally have independent engines.
+
+If marketplace registration is unavailable, provision without it and load the local Claude plugin:
+
+```bash
+bash install.sh --agents none
+claude --plugin-dir "$HOME/.local/share/visual-decider/marketplace/plugins/visual-decider"
+```
+
+Local plugin loading still follows your organization's plugin policy.
 
 ## Use from an agent
 
@@ -95,7 +125,7 @@ For multiple video questions, each sample contains a `decisions` array; `questio
 The installer prints the executable location; it does not modify shell startup files. For convenience:
 
 ```bash
-export PATH="$HOME/.local/share/visual-decider/versions/0.2.1/bin:$PATH"
+export PATH="$HOME/.local/share/visual-decider/versions/0.3.0/bin:$PATH"
 visual-decide image /path/to/screen.png 'Is an error visible?' Yes No
 visual-decide video /path/to/clip.mp4 'Is a person visible?' Yes No --sample-interval 1
 visual-decide batch --folder /path/to/media --questions-file questions.json --recursive
@@ -121,7 +151,7 @@ The core package can be imported and tested without MLX or an agent SDK. The inc
 
 ## Optional shared HTTP service
 
-To share one model across agent processes, start this manually in a separate terminal:
+For applications that need an HTTP endpoint instead of the default shared Unix socket, start this manually in a separate terminal:
 
 ```bash
 visual-decider-http --root /path/to/media

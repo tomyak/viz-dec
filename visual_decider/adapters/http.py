@@ -110,14 +110,22 @@ def create_app(model=None, roots=None, analyzer_factory=None):
 def main():
     import uvicorn
 
+    from .settings import load_settings
+
     p = argparse.ArgumentParser()
     p.add_argument("--model")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument(
-        "--root", action="append", help="Allowed local file root; defaults to working directory"
+        "--root", action="append", help="Allowed local file root; defaults to installed settings"
     )
     args = p.parse_args()
-    uvicorn.run(create_app(args.model, args.root), host="127.0.0.1", port=args.port, workers=1)
+    settings = load_settings()
+    uvicorn.run(
+        create_app(args.model or settings.get("model"), args.root or settings["roots"]),
+        host="127.0.0.1",
+        port=args.port,
+        workers=1,
+    )
 
 
 if __name__ == "__main__":

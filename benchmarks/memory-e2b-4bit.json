@@ -1,0 +1,29 @@
+{
+  "model": "mlx-community/gemma-4-e2b-it-4bit",
+  "hardware": "macOS-26.6.2-arm64-arm-64bit",
+  "peak_mlx_bytes": 4448162812,
+  "max_rss_bytes": 4580917248,
+  "summary": {
+    "files": 9,
+    "succeeded": 9,
+    "failed": 0,
+    "skipped": 0,
+    "frame_budget_used": 0,
+    "decision_budget_used": 9,
+    "vision_encodes": 9,
+    "vision_cache_hits": 0,
+    "scoring_passes": 36,
+    "decisions_reused": 0
+  },
+  "winners": [
+    "Dog",
+    "Cat",
+    "Person",
+    "Empty room",
+    "Login page",
+    "Error dialog",
+    "Invoice",
+    "Medical record",
+    "Ball"
+  ]
+}
