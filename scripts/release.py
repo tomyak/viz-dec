@@ -43,6 +43,7 @@ def set_version(new):
         ROOT / "pyproject.toml",
         ROOT / "install.sh",
         ROOT / "README.md",
+        ROOT / "docs/INSTALLATION.md",
         ROOT / "docs/CORPORATE.md",
         ROOT / ".claude-plugin/marketplace.json",
         PLUGIN / ".mcp.json",

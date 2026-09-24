@@ -2,7 +2,7 @@
 
 The package and both plugins share a semantic version. Public releases are Git tags `vMAJOR.MINOR.PATCH` on `tomyak/viz-dec`. Tags should be immutable.
 
-1. Run `uv run python scripts/release.py --set-version MAJOR.MINOR.PATCH`. This updates Python/plugin metadata, launcher version, README examples, installer default tag, and lock metadata.
+1. Run `uv run python scripts/release.py --set-version MAJOR.MINOR.PATCH`. This updates Python/plugin metadata, launcher version, README and installation-guide examples, installer default tag, and lock metadata.
 2. Add the matching CHANGELOG.md entry. Review dependency/model revision changes separately.
 3. Run lint, format check, unit/integration tests, model tests on Apple Silicon, plugin validation, and `uv build`. Test `bash install.sh --agents both` from a clean installation directory, including a model-download failure and cached-model reuse. Check private files/credentials are excluded.
 4. Commit, push, and verify CI. Run `uv run python scripts/release.py --check --tag vMAJOR.MINOR.PATCH`, then create and push that tag.

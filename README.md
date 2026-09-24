@@ -1,215 +1,75 @@
 # Visual Decider
 
-Local finite-choice image and video decisions for **Codex, Claude Code, Python, and the CLI**. Ask a question with 2–10 choices; get structured model preferences without generating and parsing prose. The included backend uses **Gemma 4 + MLX on Apple Silicon macOS**. The Python core and backend have no agent dependencies; agent integration lives in separate adapters and plugin manifests.
+Ask **Claude Code** or **Codex** questions about images and videos using a local AI model on your Mac.
 
-**Scores are normalized preferences, not calibrated probabilities.** Videos are sampled still frames, not motion-model judgments. High scores and consistent choice permutations can still be wrong.
+[![Set up Claude Code](https://img.shields.io/badge/Set_up-Claude_Code-D97757?style=for-the-badge)](#claude-code)
+[![Set up Codex](https://img.shields.io/badge/Set_up-Codex-167D66?style=for-the-badge)](#codex)
 
-## Install
+**You need:** an Apple Silicon Mac (M1 or newer), 8 GB+ memory, Git, Python 3, and your agent’s CLI installed.
 
-Prerequisites: Apple Silicon macOS, at least 8 GiB of unified memory, Git, Python 3, and the CLI for the agent you use. The installer detects physical memory and selects a model, then provisions Python 3.12 with uv if needed.
+The install command picks a model for your Mac, downloads missing weights, installs the skill, and runs a health check. Existing model choices and complete cached weights are reused.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash
-```
+## Claude Code
 
-This one command:
-
-- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.4.1`.
-- Chooses a model for the Mac's memory, printing the selection before downloading anything.
-- Reuses complete cached Gemma weights or downloads missing weights from Hugging Face. Known models use pinned commit revisions.
-- Registers the plugin with every detected supported agent, including MCP configuration and its skill. **No manual SKILL.md copying.**
-- Uses your home directory as the default media access root. Shares one on-demand model between agent sessions over an owner-only Unix socket; opens no TCP port and installs no login service.
-
-### Standalone skill or direct MCP
-
-To install the skill for Claude Code **without a marketplace or MCP connection**:
+**1. Copy this into Terminal:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents claude --integration skill
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents claude --integration skill --check-model
 ```
 
-Use `--agents codex` or `--agents both` for the other agent choices. All modes install the same runtime and download the selected model when absent:
+**2. Restart Claude Code.** Drag in a photo (or paste its full file path), then ask:
 
-| `--integration` | Agent setup |
-|---|---|
-| `plugin` | Native plugin with skill and MCP; default on first install |
-| `skill` | Personal skill using CLI; no MCP or marketplace registration |
-| `skill-mcp` | Personal skill plus a directly registered MCP server |
-| `mcp` | Direct MCP only; no skill or marketplace registration |
+```text
+Use visual-decider on this image. Is there one person or two people?
+```
 
-The installer manages skill links at `~/.agents/skills/visual-decider` for Codex and `~/.claude/skills/visual-decider` for Claude Code (`CLAUDE_CONFIG_DIR` is respected). No skill files need to be copied by hand. `--codex-skills-dir` and `--claude-skills-dir` override these directories. The skill contains instructions and a small launcher; the model stays in the shared runtime, not in each skill.
+Claude uses the local model and reports its answer.
 
-Omitting `--integration` on later installs retains each selected agent's previous mode. Switching to standalone modes removes/disables this package's user plugin and replaces/removes its direct MCP entry as appropriate. A legacy MCP executable registered under this installation, including accidental leading whitespace, is recognized and repaired. Unrelated skills and MCP registrations with the same name are refused rather than overwritten. Project-scoped integrations need to be removed in that project first. Restart agent sessions after switching modes. Managed organization policies still apply.
+## Codex
 
-Older Claude Code versions may report `unknown command 'list'` for `claude plugin list`. Starting with 0.4.1, standalone modes handle this automatically through the documented [`enabledPlugins` setting](https://code.claude.com/docs/en/plugins-reference), changing only `visual-decider@visual-decider` to `false` in user settings. You do not need to upgrade Claude Code or use its plugin marketplace for a standalone skill. Other plugin-list failures remain errors.
-
-| Physical memory | Automatic model |
-|---|---|
-| 8–15 GiB | `mlx-community/gemma-4-e2b-it-4bit` |
-| 16–31 GiB (including 18 GiB Macs) | `mlx-community/gemma-4-e4b-it-4bit` |
-| 32 GiB or more | `google/gemma-4-E4B-it` (BF16) |
-
-These are selection tiers, not measured peak-memory guarantees. macOS, other apps, image sizes, and request sizes still affect available memory. Quantization and the smaller E2B model can change answers. Below 8 GiB, or if memory detection fails, automatic selection stops with an explicit error; an administrator can still choose `--model`. Selection uses physical memory rather than fluctuating free memory so reruns are repeatable.
-
-For gated Google weights, accept access on the [model page](https://huggingface.co/google/gemma-4-E4B-it) and authenticate with `hf auth login` or `HF_TOKEN` before installing. The installer reports an actionable error if access is unavailable. The MIT code license does not license the model weights.
-
-Select agents, a model, or access roots:
+**1. Copy this into Terminal** with the Codex CLI installed:
 
 ```bash
-# From a cloned checkout:
-bash install.sh --agents both --allow-root /path/to/media
-bash install.sh --agents codex --model mlx-community/gemma-4-26B-A4B-it-4bit
-bash install.sh --agents claude --allow-root /  # all media readable by your account
-bash install.sh --agents none                # engine and CLI only
-bash install.sh --model auto                 # reselect automatically, overriding a previous choice
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents codex --integration skill --check-model
 ```
 
-Roots can be repeated. Existing roots and explicit model choices are retained unless overridden. Automatic selections are reevaluated on install; an older installation using the original Google E4B default migrates to the appropriate tier. Older custom snapshots are preserved. `--model auto` deliberately resets an explicit choice. Configuration is in `~/.local/share/visual-decider/config.json`; selection and integration provenance is in `installation.json`. Neither contains credentials. Set `VISUAL_DECIDER_HOME` when running the installer to relocate it. Stable launchers under that installation's `bin/` record the location explicitly, including for direct CLI commands.
+**2. Restart Codex.** Drag in a photo (or paste its full file path), then ask:
 
-Rerunning the installer reuses the versioned environment, complete cached model, settings, and named agent integrations. A per-installation lock prevents concurrent installers from modifying the same setup. Installation validates model files without loading a model or starting a server, unless `--check-model` is requested.
+```text
+Use visual-decider on this image. Is there one person or two people?
+```
 
-**Restart existing Codex/Claude Code sessions once after upgrading from 0.2.x** to release their old private models and pick up the new MCP adapter. New agent sessions and CLI calls share one model per installation. Simultaneous first requests are protected by a process lifetime lock. The model starts on the first visual request, survives individual agent exits, and shuts down after five minutes with no active requests. Later use restarts it. A crash releases the lock automatically. Model/configuration changes replace an idle service only after the previous process exits; a busy service asks the caller to retry. `--in-process` and manually started HTTP/Python engines are explicit opt-outs and can load additional copies.
+Codex uses the local model and reports its answer.
 
-To inspect or stop the shared engine (neither command starts a model):
+## Try more
+
+Attach a video and ask:
+
+```text
+Use visual-decider on this video. Is a person visible in the room?
+```
+
+Attach several images and ask:
+
+```text
+Use visual-decider to batch these images. For each image, is a person visible?
+```
+
+Photos and videos in your home folder work by default. The model is shared across agent sessions and stops after five idle minutes. Video answers come from sampled frames; brief events between frames can be missed.
+
+## Check that it works
 
 ```bash
-~/.local/share/visual-decider/bin/visual-decider-service status
-~/.local/share/visual-decider/bin/visual-decider-service stop
+"$HOME/.local/share/visual-decider/bin/visual-decider-health"
 ```
 
-`status` reports the PID, model, loaded state, and active request count. `stop` refuses to interrupt active work. Several lightweight MCP adapter processes are normal; only the shared engine loads weights. Different `VISUAL_DECIDER_HOME` directories intentionally have independent engines.
+Look for `"status": "ok"` at the top. To update or repair an installation, rerun your agent’s install command above.
 
-If marketplace registration is unavailable, provision without it and load the local Claude plugin:
+## More documentation
 
-```bash
-bash install.sh --agents none
-claude --plugin-dir "$HOME/.local/share/visual-decider/marketplace/plugins/visual-decider"
-```
+- [Installation options and troubleshooting](docs/INSTALLATION.md) — MCP, plugins, models, and access to other folders.
+- [Usage guide](docs/USAGE.md) — batches, multiple questions, CLI, and Python.
+- [Private corporate distribution](docs/CORPORATE.md).
+- [Development](docs/DEVELOPMENT.md) and [architecture](ARCHITECTURE.md).
 
-Local plugin loading still follows your organization's plugin policy.
-
-### Model health check
-
-```bash
-~/.local/share/visual-decider/bin/visual-decider-health
-# Files and process status only; does not start/load the model:
-~/.local/share/visual-decider/bin/visual-decider-health --no-inference
-```
-
-The default check validates configuration and local model files, starts/reuses the shared service, then freshly encodes two generated color images and checks their expected answers across choice rotations. It reports stage-specific errors, model metadata, memory counters, timing, and the service PID/log location as JSON. Failures exit with status 1. It never downloads weights; rerun installation to provision missing files. `preflight_ok` with `--no-inference` means inference was skipped. The synthetic smoke test checks basic model operation, not accuracy on your real tasks. Run it after installation or for diagnosis, not before every request. Add `--check-model` to an installation command to run it at the end.
-
-## Use from an agent
-
-Drag an image/video onto your agent and ask:
-
-> Use visual-decider on this file. Is there one person or two people?
-
-The agent passes the attachment's absolute local path. Files do not need to be in the repository or fixtures folder; they must be readable under a configured root. The shared skill preserves the exact user question and supplied choices, attributes the model's answer, and reports disagreement between prompt variants.
-
-| MCP tool | Purpose |
-|---|---|
-| `classify_image` | One question and choices on an image |
-| `inspect_image` | Multiple questions, one image encoding |
-| `analyze_video` | One question across sampled video frames |
-| `analyze_batch` | Folder or file list; shared or per-file question batches |
-| `model_health` | Fresh synthetic vision/scoring test on the same model |
-
-## Efficient batches
-
-The batch engine shares visual encodings, memoizes identical content/question decisions within the job, and decodes each video **once for all its questions**. Identical decoded pixels can reuse work even across image formats. It holds a bounded visual LRU and a bounded decision LRU; GPU scoring stays serialized. It does not claim simultaneous tensor batching or cross-question language-KV reuse. See [architecture](ARCHITECTURE.md).
-
-Folder request through MCP or HTTP:
-
-```json
-{
-  "folder": "/absolute/path/to/media",
-  "recursive": true,
-  "questions": [
-    {"question": "Is a person visible?", "choices": ["Yes", "No"]},
-    {"question": "How many people are visible?", "choices": ["None", "One", "Two", "More than two"]}
-  ],
-  "sample_interval": 1.0,
-  "max_total_frames": 1000
-}
-```
-
-A file list can mix images/videos and override questions for individual files:
-
-```json
-{
-  "files": [
-    "/absolute/path/to/photo.jpg",
-    {"path": "/absolute/path/to/clip.mp4", "questions": [
-      {"question": "Is the patient in the room?", "choices": ["Yes", "No"]},
-      {"question": "Did the patient fall?", "choices": ["Yes", "No"]}
-    ]}
-  ],
-  "questions": [{"question": "Is a person visible?", "choices": ["Yes", "No"]}]
-}
-```
-
-Supply exactly one of `folder` or `files`. Folder discovery sorts names, skips hidden entries, filters supported media extensions, and does not traverse directory symlinks. Every resolved file must still pass the access-root check. Empty folders and over-limit folders fail explicitly. File lists retain input order and return `ok`, `error`, or `skipped` per entry. Questions are validated before media inference begins.
-
-Defaults: 128 files (maximum 512), 32 questions per file, 300 samples per video (maximum 1,000), 1,000 samples across the batch (maximum 10,000), and 4,096 requested decisions (maximum 16,384). Use `max_files`, `max_frames`, `max_total_frames`, and `max_decisions` to adjust these. Failed videos conservatively consume their reserved budget; later files are skipped when budgets are exhausted. Every video result reports `truncated` and `analyzed_until`. The summary reports budget use, vision encodes, cache hits, scoring passes, and reused decisions.
-
-For multiple video questions, each sample contains a `decisions` array; `questions` contains a separate event timeline for each question. Event intervals are sample-and-hold estimates. `frame_time_s` records the actual decoded frame timestamp. Short events between samples can be missed.
-
-## CLI and Python
-
-The installer prints the executable location; it does not modify shell startup files. For convenience:
-
-```bash
-export PATH="$HOME/.local/share/visual-decider/bin:$PATH"
-visual-decide image /path/to/screen.png 'Is an error visible?' Yes No
-visual-decide video /path/to/clip.mp4 'Is a person visible?' Yes No --sample-interval 1
-visual-decide batch --folder /path/to/media --questions-file questions.json --recursive
-visual-decide batch --files /path/to/a.jpg /path/to/b.mp4 --questions-file questions.json
-visual-decide batch --manifest batch.json
-```
-
-`questions.json` contains an array of question/choices objects. `batch.json` contains a complete request like the examples above. CLI output is JSON; inspect per-file statuses even when the command completes successfully.
-
-```python
-from visual_decider import Analyzer
-
-analyzer = Analyzer()  # Load once, reuse. Inference requires cached weights.
-result = analyzer.analyze_batch(
-    folder="/path/to/media",
-    questions=[{"question": "Is a person visible?", "choices": ["Yes", "No"]}],
-    recursive=True,
-)
-print(result["summary"])
-```
-
-The core package can be imported and tested without MLX or an agent SDK. The included MLX backend requires Apple Silicon; platform independence here means independence from **agent platforms**, not universal accelerator support. An alternate backend can implement `encode`, `score`, and `info` and be passed as `Analyzer(backend=...)`.
-
-## Optional shared HTTP service
-
-For applications that need an HTTP endpoint instead of the default shared Unix socket, start this manually in a separate terminal:
-
-```bash
-visual-decider-http --root /path/to/media
-visual-decide --url http://127.0.0.1:8765 image /path/to/screen.png 'Is an error visible?' Yes No
-visual-decider-mcp --url http://127.0.0.1:8765
-```
-
-The last command is the alternative MCP launch command for a custom agent configuration. Disable the bundled plugin's MCP server before adding a duplicate custom registration. HTTP exposes `/classify_image`, `/inspect_image`, `/analyze_video`, `/analyze_batch`, and `/health`. It binds to loopback, rejects browser origins and remote hosts, and limits request bodies to 64 KiB. For large batches prefer folders or stdio MCP. `GET /health` returns startup metadata without waiting behind inference; `POST /model_health` with `{}` performs the synthetic test on that HTTP worker through its inference queue.
-
-This is a trusted local-user service. Another local process with access to the port can request files in the allowed roots. The engine sends no image/video bytes to remote inference. Agent hosts receive paths, questions, and structured results and follow their own data-handling policies. Provisioning contacts package/model hosts. Inference only opens validated local weights; remote code loading is disabled.
-
-## Development and releases
-
-```bash
-uv sync --frozen --all-extras
-uv run ruff check .
-uv run ruff format --check .
-uv run pytest -q
-RUN_MODEL_TESTS=1 uv run pytest tests/model -q  # Apple Silicon + cached weights
-uv run python benchmarks/mcp_smoke.py         # Real stdio MCP and Gemma
-uv run python scripts/release.py --check
-uv build
-```
-
-[Release instructions](docs/RELEASING.md), [private corporate distribution](docs/CORPORATE.md), [review findings](docs/REVIEW.md), [validation](docs/VALIDATION.md), and [historical model benchmarks](benchmarks/REPORT.md).
-
-License: [MIT](LICENSE). The repository contains original synthetic test fixtures. Personal photos/videos, cached models, virtual environments, and local settings are excluded from distribution.
+[MIT license](LICENSE) · [Releases](https://github.com/tomyak/viz-dec/releases) · [Validation](docs/VALIDATION.md)
