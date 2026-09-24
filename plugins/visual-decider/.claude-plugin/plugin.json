@@ -1,0 +1,20 @@
+{
+  "name": "visual-decider",
+  "version": "0.2.0",
+  "description": "Local finite-choice image and sampled-video decisions using Gemma and MLX.",
+  "author": {
+    "name": "Thomas Chernetsky",
+    "url": "https://github.com/tomyak"
+  },
+  "homepage": "https://github.com/tomyak/viz-dec",
+  "repository": "https://github.com/tomyak/viz-dec",
+  "license": "MIT",
+  "keywords": [
+    "vision",
+    "local",
+    "gemma",
+    "mlx"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

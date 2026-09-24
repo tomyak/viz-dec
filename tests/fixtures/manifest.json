@@ -1,0 +1,110 @@
+[
+  {
+    "name": "dog",
+    "path": "tests/fixtures/dog.png",
+    "question": "What is depicted?",
+    "choices": [
+      "Dog",
+      "Cat",
+      "Person",
+      "Empty room"
+    ],
+    "expected": "Dog"
+  },
+  {
+    "name": "cat",
+    "path": "tests/fixtures/cat.png",
+    "question": "What is depicted?",
+    "choices": [
+      "Dog",
+      "Cat",
+      "Person",
+      "Empty room"
+    ],
+    "expected": "Cat"
+  },
+  {
+    "name": "person",
+    "path": "tests/fixtures/person.png",
+    "question": "What is depicted?",
+    "choices": [
+      "Dog",
+      "Cat",
+      "Person",
+      "Empty room"
+    ],
+    "expected": "Person"
+  },
+  {
+    "name": "empty_room",
+    "path": "tests/fixtures/empty_room.png",
+    "question": "What is depicted?",
+    "choices": [
+      "Dog",
+      "Cat",
+      "Person",
+      "Empty room"
+    ],
+    "expected": "Empty room"
+  },
+  {
+    "name": "login",
+    "path": "tests/fixtures/login.png",
+    "question": "What state is the UI in?",
+    "choices": [
+      "Login page",
+      "Error dialog",
+      "Dashboard",
+      "Loading"
+    ],
+    "expected": "Login page"
+  },
+  {
+    "name": "error",
+    "path": "tests/fixtures/error.png",
+    "question": "What state is the UI in?",
+    "choices": [
+      "Login page",
+      "Error dialog",
+      "Dashboard",
+      "Loading"
+    ],
+    "expected": "Error dialog"
+  },
+  {
+    "name": "invoice",
+    "path": "tests/fixtures/invoice.png",
+    "question": "What kind of document is this?",
+    "choices": [
+      "Invoice",
+      "Medical record",
+      "Letter",
+      "Other"
+    ],
+    "expected": "Invoice"
+  },
+  {
+    "name": "medical",
+    "path": "tests/fixtures/medical.png",
+    "question": "What kind of document is this?",
+    "choices": [
+      "Invoice",
+      "Medical record",
+      "Letter",
+      "Other"
+    ],
+    "expected": "Medical record"
+  },
+  {
+    "name": "ambiguous",
+    "path": "tests/fixtures/ambiguous.png",
+    "question": "What does this gray shape depict?",
+    "choices": [
+      "Ball",
+      "Moon",
+      "Button",
+      "Other"
+    ],
+    "expected": null
+  }
+]

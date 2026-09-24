@@ -1,0 +1,42 @@
+{
+  "anyjev": {
+    "commit": "a59a69eaa91e62dc9b42924f8491f76d1b1972ea",
+    "remote": "https://github.com/nokia-applied-research/AnyJev.git"
+  },
+  "vlm-mcp-server": {
+    "commit": "1f99333f821b2a23b335665fe2b070e8ff79a94e",
+    "remote": "https://github.com/syntx-ai/vlm-mcp-server.git"
+  },
+  "semif": {
+    "commit": "23cf1f39fc9534fe81437200959b6dfc7106e45a",
+    "remote": "https://github.com/TheoLeeCJ/SemIf.git"
+  },
+  "ollama-vision-mcp": {
+    "commit": "a480c78936d79873a3c3970cf7692f67a1c2464b",
+    "remote": "https://github.com/masterLazy/ollama-vision-mcp.git"
+  },
+  "djev": {
+    "commit": "3ce907e6835212f27ee82b4cee9039198c4abe35",
+    "remote": "https://github.com/Davipar/djev-dev.git"
+  },
+  "local-mmcp": {
+    "commit": "230f5b10a6b6496ba55688c15df0ad32b1596dd8",
+    "remote": "https://github.com/rorojiao/local-mmcp.git"
+  },
+  "visual-jev": {
+    "commit": "2d68c11011a16e5ef3a473dedc25ef64acf088de",
+    "remote": "https://github.com/jiangxiluning/Visual-Jev.git"
+  },
+  "mcp-vision-bridge": {
+    "commit": "f8020bce8203bd96f5e546411cf5afc8f88aaa61",
+    "remote": "https://github.com/ujiahka/mcp-vision-bridge.git"
+  },
+  "mlx-vlm": {
+    "commit": "5e1aa686509147cbd8abfb27227b7f14e0aa157d",
+    "remote": "https://github.com/Blaizzy/mlx-vlm.git"
+  },
+  "local-vision-mcp": {
+    "commit": "2debde16ff44e9d516b327d52416c21933aa872e",
+    "remote": "https://github.com/tmchao7/local-vision-mcp.git"
+  }
+}

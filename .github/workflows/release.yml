@@ -1,0 +1,26 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.10.10
+      - run: uv sync --frozen --all-extras
+      - run: uv run ruff check . && uv run ruff format --check . && uv run pytest -q
+      - run: uv run python scripts/release.py --check --tag "$GITHUB_REF_NAME"
+      - run: uv build && uv run python scripts/release.py --archive
+      - name: Hash artifacts
+        working-directory: dist
+        run: sha256sum *.whl *.tar.gz *.zip > SHA256SUMS
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --title "Visual Decider $GITHUB_REF_NAME" --notes-file CHANGELOG.md

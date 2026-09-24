@@ -1,0 +1,964 @@
+{
+  "hardware": "Apple M3 Max\n137438953472",
+  "runs": [
+    {
+      "filtering": false,
+      "seconds": 5.58451141603291,
+      "frames_per_second": 1.4325335564777104,
+      "classified_frames_per_second": 1.4325335564777104,
+      "encodes": 4,
+      "result": {
+        "duration": 8.0,
+        "analyzed_until": 8.0,
+        "truncated": false,
+        "sample_interval": 1.0,
+        "frames_classified": 8,
+        "samples": [
+          {
+            "time_s": 0.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999677610451508,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999677610451508
+                },
+                {
+                  "choice": "Dog",
+                  "score": 1.7845184321007255e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 1.4393770528367386e-05
+                }
+              ],
+              "margin": 0.9999499158608298,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 730.5650840280578,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9908449649810791
+                },
+                {
+                  "allowed_token_mass": 0.9976585507392883
+                },
+                {
+                  "allowed_token_mass": 0.9931115508079529
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 1.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999363681542691,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999363681542691
+                },
+                {
+                  "choice": "Dog",
+                  "score": 4.129623546737646e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 2.2335610262962714e-05
+                }
+              ],
+              "margin": 0.9998950719188018,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 595.2450840268284,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9876542687416077
+                },
+                {
+                  "allowed_token_mass": 0.9966087341308594
+                },
+                {
+                  "allowed_token_mass": 0.9938790202140808
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 2.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Dog",
+              "score": 0.9999999789695307,
+              "choices": [
+                {
+                  "choice": "Dog",
+                  "score": 0.9999999789695307
+                },
+                {
+                  "choice": "Person",
+                  "score": 1.4670200996560654e-08
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 6.360269222559798e-09
+                }
+              ],
+              "margin": 0.9999999642993298,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 601.0165000334382,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9999580383300781
+                },
+                {
+                  "allowed_token_mass": 0.9999675750732422
+                },
+                {
+                  "allowed_token_mass": 0.9998531341552734
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 3.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Dog",
+              "score": 0.9999999789695307,
+              "choices": [
+                {
+                  "choice": "Dog",
+                  "score": 0.9999999789695307
+                },
+                {
+                  "choice": "Person",
+                  "score": 1.4670200996560654e-08
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 6.360269222559798e-09
+                }
+              ],
+              "margin": 0.9999999642993298,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 596.5611250139773,
+              "cache_hit": true,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9999580383300781
+                },
+                {
+                  "allowed_token_mass": 0.9999675750732422
+                },
+                {
+                  "allowed_token_mass": 0.9998531341552734
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 4.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Person",
+              "score": 0.9999997712668018,
+              "choices": [
+                {
+                  "choice": "Person",
+                  "score": 0.9999997712668018
+                },
+                {
+                  "choice": "Dog",
+                  "score": 1.7732733310367419e-07
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 5.140586434358043e-08
+                }
+              ],
+              "margin": 0.9999995939394687,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 595.8185830386356,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9996700286865234
+                },
+                {
+                  "allowed_token_mass": 0.9999618530273438
+                },
+                {
+                  "allowed_token_mass": 0.9998493194580078
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 5.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Person",
+              "score": 0.9999997712668018,
+              "choices": [
+                {
+                  "choice": "Person",
+                  "score": 0.9999997712668018
+                },
+                {
+                  "choice": "Dog",
+                  "score": 1.7732733310367419e-07
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 5.140586434358043e-08
+                }
+              ],
+              "margin": 0.9999995939394687,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 591.2558339769021,
+              "cache_hit": true,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9996700286865234
+                },
+                {
+                  "allowed_token_mass": 0.9999618530273438
+                },
+                {
+                  "allowed_token_mass": 0.9998493194580078
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 6.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999363681542691,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999363681542691
+                },
+                {
+                  "choice": "Dog",
+                  "score": 4.129623546737646e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 2.2335610262962714e-05
+                }
+              ],
+              "margin": 0.9998950719188018,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 597.6613750681281,
+              "cache_hit": true,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9876542687416077
+                },
+                {
+                  "allowed_token_mass": 0.9966087341308594
+                },
+                {
+                  "allowed_token_mass": 0.9938790202140808
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 7.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999363681542691,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999363681542691
+                },
+                {
+                  "choice": "Dog",
+                  "score": 4.129623546737646e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 2.2335610262962714e-05
+                }
+              ],
+              "margin": 0.9998950719188018,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 595.0075410073623,
+              "cache_hit": true,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9876542687416077
+                },
+                {
+                  "allowed_token_mass": 0.9966087341308594
+                },
+                {
+                  "allowed_token_mass": 0.9938790202140808
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          }
+        ],
+        "events": [
+          {
+            "start": 0.0,
+            "end": 2.0,
+            "choice": "Empty room",
+            "peak_score": 0.9999677610451508,
+            "samples": 2,
+            "recommended_action": "review"
+          },
+          {
+            "start": 2.0,
+            "end": 4.0,
+            "choice": "Dog",
+            "peak_score": 0.9999999789695307,
+            "samples": 2,
+            "recommended_action": "review"
+          },
+          {
+            "start": 4.0,
+            "end": 6.0,
+            "choice": "Person",
+            "peak_score": 0.9999997712668018,
+            "samples": 2,
+            "recommended_action": "review"
+          },
+          {
+            "start": 6.0,
+            "end": 8.0,
+            "choice": "Empty room",
+            "peak_score": 0.9999363681542691,
+            "samples": 2,
+            "recommended_action": "review"
+          }
+        ],
+        "temporal_resolution_note": "Sample-and-hold intervals; transitions may occur between samples."
+      }
+    },
+    {
+      "filtering": true,
+      "seconds": 3.60590433399193,
+      "frames_per_second": 2.2185835393873496,
+      "classified_frames_per_second": 1.3866147121170935,
+      "encodes": 4,
+      "result": {
+        "duration": 8.0,
+        "analyzed_until": 8.0,
+        "truncated": false,
+        "sample_interval": 1.0,
+        "frames_classified": 5,
+        "samples": [
+          {
+            "time_s": 0.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999677610451508,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999677610451508
+                },
+                {
+                  "choice": "Dog",
+                  "score": 1.7845184321007255e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 1.4393770528367386e-05
+                }
+              ],
+              "margin": 0.9999499158608298,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 598.5947500448674,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9908449649810791
+                },
+                {
+                  "allowed_token_mass": 0.9976585507392883
+                },
+                {
+                  "allowed_token_mass": 0.9931115508079529
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 1.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999363681542691,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999363681542691
+                },
+                {
+                  "choice": "Dog",
+                  "score": 4.129623546737646e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 2.2335610262962714e-05
+                }
+              ],
+              "margin": 0.9998950719188018,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 597.0231250394136,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9876542687416077
+                },
+                {
+                  "allowed_token_mass": 0.9966087341308594
+                },
+                {
+                  "allowed_token_mass": 0.9938790202140808
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 2.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Dog",
+              "score": 0.9999999789695307,
+              "choices": [
+                {
+                  "choice": "Dog",
+                  "score": 0.9999999789695307
+                },
+                {
+                  "choice": "Person",
+                  "score": 1.4670200996560654e-08
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 6.360269222559798e-09
+                }
+              ],
+              "margin": 0.9999999642993298,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 599.7332080733031,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9999580383300781
+                },
+                {
+                  "allowed_token_mass": 0.9999675750732422
+                },
+                {
+                  "allowed_token_mass": 0.9998531341552734
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 3.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Dog",
+              "score": 0.9999999789695307,
+              "choices": [
+                {
+                  "choice": "Dog",
+                  "score": 0.9999999789695307
+                },
+                {
+                  "choice": "Person",
+                  "score": 1.4670200996560654e-08
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 6.360269222559798e-09
+                }
+              ],
+              "margin": 0.9999999642993298,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 599.7332080733031,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9999580383300781
+                },
+                {
+                  "allowed_token_mass": 0.9999675750732422
+                },
+                {
+                  "allowed_token_mass": 0.9998531341552734
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": true
+          },
+          {
+            "time_s": 4.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Person",
+              "score": 0.9999997712668018,
+              "choices": [
+                {
+                  "choice": "Person",
+                  "score": 0.9999997712668018
+                },
+                {
+                  "choice": "Dog",
+                  "score": 1.7732733310367419e-07
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 5.140586434358043e-08
+                }
+              ],
+              "margin": 0.9999995939394687,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 596.658332971856,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9996700286865234
+                },
+                {
+                  "allowed_token_mass": 0.9999618530273438
+                },
+                {
+                  "allowed_token_mass": 0.9998493194580078
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 5.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Person",
+              "score": 0.9999997712668018,
+              "choices": [
+                {
+                  "choice": "Person",
+                  "score": 0.9999997712668018
+                },
+                {
+                  "choice": "Dog",
+                  "score": 1.7732733310367419e-07
+                },
+                {
+                  "choice": "Empty room",
+                  "score": 5.140586434358043e-08
+                }
+              ],
+              "margin": 0.9999995939394687,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 596.658332971856,
+              "cache_hit": false,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9996700286865234
+                },
+                {
+                  "allowed_token_mass": 0.9999618530273438
+                },
+                {
+                  "allowed_token_mass": 0.9998493194580078
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": true
+          },
+          {
+            "time_s": 6.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999363681542691,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999363681542691
+                },
+                {
+                  "choice": "Dog",
+                  "score": 4.129623546737646e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 2.2335610262962714e-05
+                }
+              ],
+              "margin": 0.9998950719188018,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 598.8248749636114,
+              "cache_hit": true,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9876542687416077
+                },
+                {
+                  "allowed_token_mass": 0.9966087341308594
+                },
+                {
+                  "allowed_token_mass": 0.9938790202140808
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": false
+          },
+          {
+            "time_s": 7.0,
+            "decision": {
+              "model": "google/gemma-4-E4B-it",
+              "question": "What is depicted?",
+              "winner": "Empty room",
+              "score": 0.9999363681542691,
+              "choices": [
+                {
+                  "choice": "Empty room",
+                  "score": 0.9999363681542691
+                },
+                {
+                  "choice": "Dog",
+                  "score": 4.129623546737646e-05
+                },
+                {
+                  "choice": "Person",
+                  "score": 2.2335610262962714e-05
+                }
+              ],
+              "margin": 0.9998950719188018,
+              "stable": true,
+              "permutation_agreement": 1.0,
+              "recommended_action": "review",
+              "reasons": [],
+              "method": "label_permute",
+              "passes": 3,
+              "latency_ms": 598.8248749636114,
+              "cache_hit": true,
+              "diagnostics": [
+                {
+                  "allowed_token_mass": 0.9876542687416077
+                },
+                {
+                  "allowed_token_mass": 0.9966087341308594
+                },
+                {
+                  "allowed_token_mass": 0.9938790202140808
+                }
+              ],
+              "score_meaning": "Normalized model preference; not calibrated probability."
+            },
+            "reused": true
+          }
+        ],
+        "events": [
+          {
+            "start": 0.0,
+            "end": 2.0,
+            "choice": "Empty room",
+            "peak_score": 0.9999677610451508,
+            "samples": 2,
+            "recommended_action": "review"
+          },
+          {
+            "start": 2.0,
+            "end": 4.0,
+            "choice": "Dog",
+            "peak_score": 0.9999999789695307,
+            "samples": 2,
+            "recommended_action": "review"
+          },
+          {
+            "start": 4.0,
+            "end": 6.0,
+            "choice": "Person",
+            "peak_score": 0.9999997712668018,
+            "samples": 2,
+            "recommended_action": "review"
+          },
+          {
+            "start": 6.0,
+            "end": 8.0,
+            "choice": "Empty room",
+            "peak_score": 0.9999363681542691,
+            "samples": 2,
+            "recommended_action": "review"
+          }
+        ],
+        "temporal_resolution_note": "Sample-and-hold intervals; transitions may occur between samples."
+      }
+    }
+  ],
+  "cache_growth": [
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 9,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 9
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 10,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 10
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 11,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 11
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 12,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 12
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 13,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 13
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 14,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 14
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 15,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 15
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 16,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 16
+      },
+      "local_only": true
+    },
+    {
+      "model": "google/gemma-4-E4B-it",
+      "snapshot": "~/.cache/huggingface/hub/models--google--gemma-4-E4B-it/snapshots/ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "load_seconds": 2.310815791017376,
+      "vision_encodes": 17,
+      "peak_memory_bytes": 16806195722,
+      "active_memory_bytes": 15917151058,
+      "cache": {
+        "entries": 4,
+        "bytes": 34865152,
+        "hits": 5,
+        "misses": 17
+      },
+      "local_only": true
+    }
+  ]
+}

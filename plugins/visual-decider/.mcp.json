@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "visual-decider": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "base=\"$VISUAL_DECIDER_HOME\"; if [ -z \"$base\" ]; then base=\"$HOME/.local/share/visual-decider\"; fi; exec \"$base/versions/0.2.0/bin/visual-decider-mcp\""
+      ]
+    }
+  }
+}

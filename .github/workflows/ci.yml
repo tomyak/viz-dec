@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.10.10
+      - run: uv sync --frozen --all-extras
+      - run: uv run ruff check . && uv run ruff format --check .
+      - run: uv run pytest -q
+      - run: uv run python scripts/release.py --check
+      - run: uv build
+      - name: Core imports without optional dependencies
+        run: |
+          uv venv /tmp/visual-decider-core --python 3.12
+          uv pip install --python /tmp/visual-decider-core/bin/python dist/*.whl
+          cd /tmp
+          /tmp/visual-decider-core/bin/python -c 'from visual_decider import Analyzer; import sys; assert not any(x in sys.modules for x in ("mcp", "fastapi", "mlx"))'

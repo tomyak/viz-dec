@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "visual-decider"
+version = "0.2.0"
+description = "Local finite-choice image and sampled-video decisions with Gemma and MLX"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = "MIT"
+dependencies = ["Pillow==12.3.0", "numpy==2.5.3", "av==18.1.0"]
+
+[project.optional-dependencies]
+mlx = ["mlx-vlm==0.7.2; sys_platform == 'darwin' and platform_machine == 'arm64'", "mlx==0.32.2; sys_platform == 'darwin' and platform_machine == 'arm64'", "transformers==5.17.0", "huggingface-hub==1.32.0"]
+mcp = ["mcp==2.2.0"]
+http = ["fastapi==0.141.1", "uvicorn==0.53.0", "httpx==0.28.1"]
+
+[dependency-groups]
+dev = ["opencv-python==5.0.0.93", "pytest==9.1.1", "hypothesis==6.168.1", "ruff==0.15.7", "build==1.4.0"]
+
+[project.scripts]
+visual-decide = "visual_decider.adapters.cli:main"
+visual-decider-http = "visual_decider.adapters.http:main"
+visual-decider-mcp = "visual_decider.adapters.mcp_server:main"
+visual-decider-model = "visual_decider.models.download:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["visual_decider"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/visual_decider", "/tests", "/scripts", "/plugins", "/.agents", "/.claude-plugin", "/install.sh", "/uv.lock", "/pyproject.toml", "/README.md", "/LICENSE", "/CHANGELOG.md", "/ARCHITECTURE.md", "/docs"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["model: requires local Gemma weights and Metal"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

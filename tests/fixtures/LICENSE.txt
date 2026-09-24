@@ -1,0 +1,1 @@
+These synthetic drawings were created for this project and are dedicated to the public domain under CC0 1.0. They contain no real personal information. They are smoke/regression fixtures, not a representative accuracy or calibration dataset.

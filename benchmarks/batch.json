@@ -1,0 +1,43 @@
+{
+  "model": "google/gemma-4-E4B-it",
+  "snapshot": "ee0ef6023621cff504d758262d4e04895a5af4a2",
+  "files": [
+    "tests/fixtures/login.png",
+    "tests/fixtures/error.png",
+    "tests/fixtures/login.png"
+  ],
+  "questions": [
+    {
+      "question": "What state is the UI in?",
+      "choices": [
+        "Login page",
+        "Error dialog",
+        "Dashboard"
+      ]
+    },
+    {
+      "question": "Is an error visible?",
+      "choices": [
+        "Yes",
+        "No"
+      ]
+    }
+  ],
+  "repeated_inspect_seconds": 3.032000125036575,
+  "batch_seconds": 2.220966042019427,
+  "speedup": 1.3651717620498647,
+  "repeated_inspect_encodes": 2,
+  "batch_summary": {
+    "files": 3,
+    "succeeded": 3,
+    "failed": 0,
+    "skipped": 0,
+    "frame_budget_used": 0,
+    "decision_budget_used": 6,
+    "vision_encodes": 2,
+    "vision_cache_hits": 0,
+    "scoring_passes": 10,
+    "decisions_reused": 2
+  },
+  "note": "One warmed local run, three images including one duplicate; no universal speedup claim."
+}
