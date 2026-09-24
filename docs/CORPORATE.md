@@ -7,13 +7,13 @@ The public upstream is MIT-licensed. A corporation can maintain a private fork o
 Authenticate through your organization's normal GitHub CLI, SSH agent, or Git credential helper. Clone an approved immutable tag or commit from the private repository, then invoke its installer. Example one-shell-command installation using GitHub CLI:
 
 ```bash
-gh repo clone YOUR_ORG/viz-dec "$HOME/visual-decider-install" -- --branch v0.4.0 --depth 1 && bash "$HOME/visual-decider-install/install.sh" --agents both --allow-root "$HOME/Work/Media"
+gh repo clone YOUR_ORG/viz-dec "$HOME/visual-decider-install" -- --branch v0.4.1 --depth 1 && bash "$HOME/visual-decider-install/install.sh" --agents both --allow-root "$HOME/Work/Media"
 ```
 
 Replace the organization and tag. For GitHub Enterprise, use your normal enterprise Git URL and credential helper:
 
 ```bash
-git clone --branch v0.4.0 --depth 1 git@github.company.example:AI/viz-dec.git "$HOME/visual-decider-install" && bash "$HOME/visual-decider-install/install.sh" --agents both
+git clone --branch v0.4.1 --depth 1 git@github.company.example:AI/viz-dec.git "$HOME/visual-decider-install" && bash "$HOME/visual-decider-install/install.sh" --agents both
 ```
 
 The installer registers a durable local marketplace copied from the approved source. Runtime paths do not depend on the checkout, and auto-refresh does not silently select a newer GitHub release. Remove the temporary checkout after successful installation if desired. Updates require running the approved version's installer. IT can deploy this same command using an existing endpoint-management system.
@@ -21,6 +21,8 @@ The installer registers a durable local marketplace copied from the approved sou
 If marketplace registration is unavailable, add `--integration skill` to install the personal skill using CLI access, `--integration skill-mcp` for that skill plus direct MCP, or `--integration mcp` for direct MCP alone. These modes use no marketplace registration and install the same locked runtime and selected model. They still obey managed agent policies. The installer links managed skills into `~/.agents/skills` (Codex) and `~/.claude/skills` (Claude Code), with directory overrides for managed deployments. Neither staff nor IT needs to manually copy SKILL.md. The shared launcher binds custom installation paths and preserves argument boundaries.
 
 Integration mode is remembered per agent. Switching retires this package's user plugin/direct MCP/skill as applicable; unrelated same-name configuration is refused and project-scoped conflicts need explicit project cleanup. Restart existing agent sessions after switching. Repeated registration uses one MCP name per agent, not new numbered servers.
+
+Standalone Claude installation supports older CLIs without `plugin list` or its `--json` option. For these specific capability errors, the installer atomically sets only `enabledPlugins["visual-decider@visual-decider"]` to `false` in `CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`). It preserves unrelated settings and file permissions, respects settings symlinks, and detects current-project plugin conflicts. Invalid JSON, permission errors, policy failures, and detected concurrent settings edits stop installation rather than being silently bypassed.
 
 Do not embed credentials in URLs, manifests, shell arguments, lockfiles, or configuration. Use Git/Hugging Face authentication helpers or managed environment injection. The installer does not serialize `HF_TOKEN` or Git tokens. Review the contents of internal logs under your usual retention policy.
 

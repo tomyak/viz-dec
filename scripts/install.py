@@ -5,6 +5,7 @@ import fcntl
 import json
 import os
 import platform
+import re
 import shlex
 import shutil
 import subprocess
@@ -141,7 +142,13 @@ def existing_mcp(agent, home):
         command.append("--json")
     result = run(command, check=False, capture_output=True, text=True, timeout=30)
     if result.returncode:
-        if "No MCP server named" in result.stderr + result.stdout:
+        if any(
+            message in result.stderr + result.stdout
+            for message in (
+                "No MCP server named",
+                "No MCP server found with name:",
+            )
+        ):
             return False
         raise ValueError(
             f"Cannot inspect {agent} MCP registration: {result.stderr or result.stdout}"
@@ -203,7 +210,26 @@ def register_mcp(agent, home):
 
 def remove_plugin_integration(agent):
     """Switch only this package's user integration; no marketplace access needed."""
-    result = run([agent, "plugin", "list", "--json"], capture_output=True, text=True, timeout=30)
+    result = run(
+        [agent, "plugin", "list", "--json"],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if result.returncode:
+        message = result.stderr + "\n" + result.stdout
+        # Only a missing CLI capability permits the legacy settings path. Never
+        # treat policy, permission, or other operational failures as success.
+        if agent == "claude" and re.search(
+            r"unknown command [\"']?(?:list|plugin)[\"']?(?:\s|$)|"
+            r"unknown option [\"']?--json[\"']?(?:\s|$)",
+            message,
+            re.IGNORECASE,
+        ):
+            disable_legacy_claude_plugin()
+            return
+        raise ValueError(f"Cannot inspect {agent} plugins: {message.strip()}")
     plugins = json.loads(result.stdout)
     if agent == "codex":
         active = any(
@@ -231,6 +257,66 @@ def remove_plugin_integration(agent):
             ]
             + (["--scope", "user"] if agent == "claude" else [])
         )
+
+
+def read_claude_settings(path):
+    raw = path.read_bytes() if path.exists() else None
+    settings = json.loads(raw) if raw is not None else {}
+    if not isinstance(settings, dict) or not isinstance(settings.get("enabledPlugins", {}), dict):
+        raise ValueError(f"Invalid Claude settings: {path}; expected JSON objects")
+    return raw, settings
+
+
+def disable_legacy_claude_plugin():
+    """Older Claude CLIs lack plugin list/JSON; use the documented user setting."""
+    plugin = "visual-decider@visual-decider"
+    directory = Path(os.getenv("CLAUDE_CONFIG_DIR") or Path.home() / ".claude").expanduser()
+    path = (directory / "settings.json").resolve()
+    # Keep project-scoped integrations explicit, as with the modern CLI path.
+    projects = {Path.cwd()}
+    try:
+        root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if root.returncode == 0:
+            projects.add(Path(root.stdout.strip()))
+    except (OSError, subprocess.SubprocessError):
+        pass
+    for project in projects:
+        for name in ("settings.json", "settings.local.json"):
+            candidate = project / ".claude" / name
+            if candidate.resolve() != path:
+                _, settings = read_claude_settings(candidate)
+                if settings.get("enabledPlugins", {}).get(plugin):
+                    raise ValueError(f"Disable {plugin} in {candidate} before switching modes")
+    original, settings = read_claude_settings(path)
+    enabled = settings.setdefault("enabledPlugins", {})
+    if enabled.get(plugin) is False:
+        return
+    enabled[plugin] = False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Preserve all other keys and the file's permissions, use an owner-only
+    # temporary file, and refuse to overwrite an intervening settings change.
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=path.parent, prefix=".visual-decider-", delete=False
+        ) as f:
+            temporary = Path(f.name)
+            f.write((json.dumps(settings, indent=2) + "\n").encode())
+        if (path.read_bytes() if path.exists() else None) != original:
+            raise ValueError("Claude settings changed during installation; retry the installer")
+        if original is not None:
+            temporary.chmod(path.stat().st_mode & 0o777)
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    print(f"Legacy Claude CLI: disabled only {plugin} in {path}", flush=True)
 
 
 def enable_claude_plugin():

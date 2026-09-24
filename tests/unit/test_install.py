@@ -304,3 +304,129 @@ def test_claude_already_enabled_is_success_but_other_failures_are_not(monkeypatc
     )
     with pytest.raises(ValueError, match="organization policy"):
         installer.enable_claude_plugin()
+
+
+@pytest.mark.parametrize("mode", ["skill", "skill-mcp", "mcp"])
+@pytest.mark.parametrize(
+    "message",
+    [
+        "error: unknown command 'list'",
+        "error: unknown option '--json'",
+        "error: unknown command 'plugin'",
+    ],
+)
+def test_legacy_claude_standalone_modes_repeat_without_plugin_cli(
+    skill_install,
+    monkeypatch,
+    tmp_path,
+    mode,
+    message,
+):
+    args, home, commands, registrations = skill_install
+    args.agents, args.integration = "claude", mode
+    directory = tmp_path / "legacy-claude"
+    directory.mkdir()
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(directory))
+    monkeypatch.chdir(tmp_path)
+    settings = directory / "settings.json"
+    before = {
+        "enabledPlugins": {"visual-decider@visual-decider": True, "other@market": True},
+        "permissions": {"deny": ["Bash(rm *)"]},
+        "env": {"EXAMPLE": "preserved"},
+    }
+    settings.write_text(json.dumps(before))
+    settings.chmod(0o600)
+    original_run = installer.run
+
+    def legacy_run(command, **kwargs):
+        if command[:2] == ["claude", "plugin"]:
+            assert command == ["claude", "plugin", "list", "--json"]
+            return SimpleNamespace(returncode=1, stdout="", stderr=message)
+        result = original_run(command, **kwargs)
+        if command[:3] == ["claude", "mcp", "get"] and result.returncode:
+            result.stdout, result.stderr = "", "No MCP server found with name: visual-decider"
+        return result
+
+    monkeypatch.setattr(installer, "run", legacy_run)
+    installer.install(args)
+    after = json.loads(settings.read_text())
+    before["enabledPlugins"]["visual-decider@visual-decider"] = False
+    assert after == before
+    assert settings.stat().st_mode & 0o777 == 0o600
+    timestamp = settings.stat().st_mtime_ns
+    installer.install(args)
+    assert settings.stat().st_mtime_ns == timestamp
+    assert bool(registrations) == (mode != "skill")
+    assert installer.skill_path("claude", args).exists() == (mode != "mcp")
+    assert not list(directory.glob(".visual-decider-*"))
+
+
+def test_plugin_list_policy_failure_is_not_bypassed(tmp_path, monkeypatch):
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr(
+        installer,
+        "run",
+        lambda *a, **kw: SimpleNamespace(
+            returncode=1,
+            stdout="",
+            stderr="Permission denied by organization policy",
+        ),
+    )
+    with pytest.raises(ValueError, match="Permission denied"):
+        installer.remove_plugin_integration("claude")
+    assert not (tmp_path / "settings.json").exists()
+
+
+def test_legacy_settings_missing_and_symlinked_are_safe(tmp_path, monkeypatch):
+    directory = tmp_path / "config"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(directory))
+    monkeypatch.chdir(tmp_path)
+    installer.disable_legacy_claude_plugin()
+    settings = directory / "settings.json"
+    assert settings.stat().st_mode & 0o777 == 0o600
+    target = tmp_path / "real-settings.json"
+    settings.rename(target)
+    settings.symlink_to(target)
+    target.write_text('{"enabledPlugins":{"visual-decider@visual-decider":true},"theme":"dark"}')
+    installer.disable_legacy_claude_plugin()
+    assert settings.is_symlink()
+    assert json.loads(target.read_text())["theme"] == "dark"
+
+
+def test_legacy_settings_errors_and_project_conflicts_preserve_user_file(tmp_path, monkeypatch):
+    directory = tmp_path / "config"
+    directory.mkdir()
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(directory))
+    monkeypatch.chdir(tmp_path)
+    settings = directory / "settings.json"
+    for content in ["{broken", "[]", '{"enabledPlugins": []}']:
+        settings.write_text(content)
+        with pytest.raises(ValueError):
+            installer.disable_legacy_claude_plugin()
+        assert settings.read_text() == content
+    settings.write_text('{"theme":"dark"}')
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude/settings.json").write_text(
+        '{"enabledPlugins":{"visual-decider@visual-decider":true}}'
+    )
+    with pytest.raises(ValueError, match="before switching modes"):
+        installer.disable_legacy_claude_plugin()
+    assert settings.read_text() == '{"theme":"dark"}'
+
+
+def test_legacy_settings_concurrent_edit_is_preserved(tmp_path, monkeypatch):
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path))
+    monkeypatch.chdir(tmp_path)
+    settings = tmp_path / "settings.json"
+    settings.write_text('{"theme":"dark"}')
+    original = installer.tempfile.NamedTemporaryFile
+
+    def concurrent_edit(**kwargs):
+        settings.write_text('{"theme":"light"}')
+        return original(**kwargs)
+
+    monkeypatch.setattr(installer.tempfile, "NamedTemporaryFile", concurrent_edit)
+    with pytest.raises(ValueError, match="settings changed"):
+        installer.disable_legacy_claude_plugin()
+    assert settings.read_text() == '{"theme":"light"}'
+    assert not list(tmp_path.glob(".visual-decider-*"))

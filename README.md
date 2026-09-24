@@ -9,12 +9,12 @@ Local finite-choice image and video decisions for **Codex, Claude Code, Python, 
 Prerequisites: Apple Silicon macOS, at least 8 GiB of unified memory, Git, Python 3, and the CLI for the agent you use. The installer detects physical memory and selects a model, then provisions Python 3.12 with uv if needed.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.0/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash
 ```
 
 This one command:
 
-- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.4.0`.
+- Installs locked dependencies and the engine in `~/.local/share/visual-decider/versions/0.4.1`.
 - Chooses a model for the Mac's memory, printing the selection before downloading anything.
 - Reuses complete cached Gemma weights or downloads missing weights from Hugging Face. Known models use pinned commit revisions.
 - Registers the plugin with every detected supported agent, including MCP configuration and its skill. **No manual SKILL.md copying.**
@@ -25,7 +25,7 @@ This one command:
 To install the skill for Claude Code **without a marketplace or MCP connection**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.0/install.sh | bash -s -- --agents claude --integration skill
+curl -fsSL https://raw.githubusercontent.com/tomyak/viz-dec/v0.4.1/install.sh | bash -s -- --agents claude --integration skill
 ```
 
 Use `--agents codex` or `--agents both` for the other agent choices. All modes install the same runtime and download the selected model when absent:
@@ -40,6 +40,8 @@ Use `--agents codex` or `--agents both` for the other agent choices. All modes i
 The installer manages skill links at `~/.agents/skills/visual-decider` for Codex and `~/.claude/skills/visual-decider` for Claude Code (`CLAUDE_CONFIG_DIR` is respected). No skill files need to be copied by hand. `--codex-skills-dir` and `--claude-skills-dir` override these directories. The skill contains instructions and a small launcher; the model stays in the shared runtime, not in each skill.
 
 Omitting `--integration` on later installs retains each selected agent's previous mode. Switching to standalone modes removes/disables this package's user plugin and replaces/removes its direct MCP entry as appropriate. A legacy MCP executable registered under this installation, including accidental leading whitespace, is recognized and repaired. Unrelated skills and MCP registrations with the same name are refused rather than overwritten. Project-scoped integrations need to be removed in that project first. Restart agent sessions after switching modes. Managed organization policies still apply.
+
+Older Claude Code versions may report `unknown command 'list'` for `claude plugin list`. Starting with 0.4.1, standalone modes handle this automatically through the documented [`enabledPlugins` setting](https://code.claude.com/docs/en/plugins-reference), changing only `visual-decider@visual-decider` to `false` in user settings. You do not need to upgrade Claude Code or use its plugin marketplace for a standalone skill. Other plugin-list failures remain errors.
 
 | Physical memory | Automatic model |
 |---|---|

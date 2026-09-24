@@ -2,6 +2,13 @@
 
 Local hardware: Apple M3 Max, 128 GiB RAM.
 
+## 0.4.1 older Claude Code compatibility
+
+- Reproduced `error: unknown command 'list'` using the real Claude Code **2.0.30** npm distribution, run from an isolated path without changing the normal Claude installation.
+- With isolated `CLAUDE_CONFIG_DIR` and installation home, real offline installs succeeded in `skill`, `skill-mcp`, repeated `skill-mcp`, `mcp`, and back to `skill` modes. Direct MCP entries connected successfully; skill-only mode removed the direct registration. The installed runtime passed its nonloading health preflight.
+- **100 tests passed**, 11 unchanged opt-in GPU tests skipped. New regressions cover missing plugin commands/JSON support, old MCP discovery wording, repeated settings updates, preservation of unrelated settings and permissions, settings symlinks, malformed settings, project plugin conflicts, concurrent edits, and policy failures that must not invoke the fallback.
+- The model/backend implementation is unchanged from 0.4.0; no new GPU accuracy or memory claims are made for this installer-only patch.
+
 ## 0.4.0 skill and model-health validation
 
 - Unit/integration suite: **87 passed**, 11 opt-in model tests skipped. Added standalone mode migration/repetition, remembered agent modes/directories, unrelated-config protection, leading-space legacy MCP repair, stable launcher quoting, health failure stages/nonloading preflight, fresh visual encoding, and MCP/HTTP health dispatch. Migration regressions cover Codex reporting plugin servers through `mcp get` and Claude returning a nonzero exit for an already-enabled plugin.

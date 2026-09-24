@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-09-24
+
+- Fix standalone skill/MCP installation on older Claude Code versions without `plugin list` or `--json` support. Use the documented user `enabledPlugins` setting to retire only the visual-decider plugin; preserve unrelated settings, permissions, and symlinks.
+- Keep project-scoped plugin conflicts explicit and report policy/permission failures instead of treating them as missing CLI features.
+- Recognize the older `No MCP server found with name` response during direct MCP discovery.
+
 ## 0.4.0 — 2026-09-24
 
 - Add standalone skill, skill plus MCP, and direct MCP installation for Claude Code and Codex, without marketplace registration or manual skill copying. Preserve the selected integration per agent on repeat installs.

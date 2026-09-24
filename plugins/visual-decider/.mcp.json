@@ -4,7 +4,7 @@
       "command": "/bin/sh",
       "args": [
         "-c",
-        "base=\"$VISUAL_DECIDER_HOME\"; if [ -z \"$base\" ]; then base=\"$HOME/.local/share/visual-decider\"; fi; exec \"$base/versions/0.4.0/bin/visual-decider-mcp\""
+        "base=\"$VISUAL_DECIDER_HOME\"; if [ -z \"$base\" ]; then base=\"$HOME/.local/share/visual-decider\"; fi; exec \"$base/versions/0.4.1/bin/visual-decider-mcp\""
       ]
     }
   }
